@@ -15,8 +15,16 @@ const data = [
 // For data: Cat A (275), Cat B (200), Cat C (187), Cat D (173), Cat E (90)
 const COLORS = ["#D81B60", "#E76E50", "#AD1457", "#F4A462", "#E8C468"]
 
+interface LabelProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius?: number;
+  value: number;
+}
+
 const RADIAN = Math.PI / 180
-const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius = 0, value, index }: any) => {
+const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius = 0, value }: LabelProps) => {
   const LABEL_OFFSET = 18 // How far from the slice the label should be
   const radius = outerRadius + LABEL_OFFSET
   const x = cx + radius * Math.cos(-midAngle * RADIAN)
@@ -82,7 +90,7 @@ export function SalesByCategoryChart() {
               verticalAlign="middle"
               align="right"
               wrapperStyle={{ fontSize: "12px", paddingLeft: "20px" }} // Increased padding for legend
-              formatter={(value, entry) => <span style={{ color: "#333" }}>{value}</span>}
+              formatter={(value) => <span style={{ color: "#333" }}>{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>

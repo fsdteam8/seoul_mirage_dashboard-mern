@@ -133,7 +133,7 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           thumbnailUrl: thumbnailPreview || data.thumbnailUrl,
         })
       } else {
-        result = await addProductAction({ ...data, thumbnailUrl: thumbnailPreview || data.thumbnailUrl })
+        result = await addProductAction({ ...data, thumbnailUrl: thumbnailPreview || data.thumbnailUrl || "" })
       }
 
       if (result.success) {
@@ -151,7 +151,7 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch  {
       toast({
         title: "Error",
         description: "An unexpected error occurred.",
