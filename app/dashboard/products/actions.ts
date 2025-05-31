@@ -60,7 +60,7 @@ export async function updateProductAction(
   productId: string,
   productData: Partial<Product>,
 ): Promise<{ success: boolean; message: string; product?: Product }> {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   const productIndex = productsStore.findIndex((p) => p.id === productId)
   if (productIndex === -1) {
     return { success: false, message: "Product not found." }
@@ -71,7 +71,7 @@ export async function updateProductAction(
 }
 
 export async function deleteProductAction(productId: string): Promise<{ success: boolean; message: string }> {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   const initialLength = productsStore.length
   productsStore = productsStore.filter((p) => p.id !== productId)
   if (productsStore.length === initialLength) {
