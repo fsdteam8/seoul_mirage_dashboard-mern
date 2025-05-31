@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, ShoppingBag, ListOrdered, Users, Settings, LogOut } from "lucide-react"
+import { Home, ShoppingBag, ListOrdered, Users, Settings, LogOut, ListChecks } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: Home },
   { name: "Products", href: "/dashboard/products", icon: ShoppingBag },
+  { name: "Categories", href: "/dashboard/categories", icon: ListChecks },
   { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
   { name: "Customers", href: "/dashboard/customers", icon: Users },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
