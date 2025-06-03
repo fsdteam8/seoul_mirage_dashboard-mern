@@ -1,3 +1,4 @@
+// middleware.ts
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,9 +9,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (token.role !== "admin") {
-    return NextResponse.redirect(new URL("/unauthorized", req.url)); // or any page you want
+  if (token?.role !== "admin") {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
+
   return NextResponse.next();
 }
 
