@@ -34,7 +34,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-brand-white px-6">
+    <header className="flex h-[95px] items-center justify-between border-b border-gray-200 bg-brand-white px-6">
       <div className="flex items-center">
         <Button
           variant="ghost"
@@ -52,17 +52,30 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <div className="flex items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src="/placeholder.svg?height=40&width=40"
-                  alt="User avatar"
-                />
-                <AvatarFallback>
-                  <UserCircle className="h-8 w-8 text-brand-gray" />
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+            <div className="flex items-center gap-3">
+              <div>
+                <Button
+                  variant="ghost"
+                  className="relative h-10 w-10 rounded-full"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage
+                      src="/placeholder.svg?height=40&width=40"
+                      alt="User avatar"
+                    />
+                    <AvatarFallback>
+                      <UserCircle className="h-8 w-8 text-black" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-[16px] text-[#000000] font-medium leading-[120%]">Name</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                 Admin
+                </p>
+              </div>
+            </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">

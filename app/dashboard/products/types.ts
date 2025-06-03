@@ -19,7 +19,7 @@ export interface Product {
 export const mockProducts: Product[] = [
   {
     id: "SM001",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Hydrating Essence",
     category: "Essences",
     price: 65,
@@ -33,7 +33,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM002",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Gentle Cleanser",
     category: "Cleansers",
     price: 50,
@@ -47,7 +47,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM003",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Velvet Lipstick",
     category: "Makeup",
     price: 30,
@@ -61,7 +61,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM004",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Daily Sunscreen SPF50",
     category: "Suncare",
     price: 45,
@@ -72,7 +72,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM005",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Brightening Sheet Mask",
     category: "Masks",
     price: 15,
@@ -84,7 +84,7 @@ export const mockProducts: Product[] = [
   // Add more products to test pagination
   {
     id: "SM006",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Revitalizing Eye Cream",
     category: "Eye Care",
     price: 55,
@@ -95,7 +95,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM007",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Nourishing Body Lotion",
     category: "Body Care",
     price: 40,
@@ -106,7 +106,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM008",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Vitamin C Serum",
     category: "Serums",
     price: 70,
@@ -117,7 +117,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM009",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Balancing Toner",
     category: "Toners",
     price: 35,
@@ -128,7 +128,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM010",
-    thumbnailUrl: "/placeholder.svg?height=40&width=40",
+    thumbnailUrl: "/images/dashboardlistImage.png",
     name: "Repairing Night Cream",
     category: "Moisturizers",
     price: 75,

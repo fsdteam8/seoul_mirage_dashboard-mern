@@ -1,5 +1,5 @@
 import { StatCard } from "@/components/stat-card"
-import { DollarSign, ShoppingCart, Users, BarChart3, Package, Clock, CheckCircle } from "lucide-react" // Changed TrendingUp to BarChart3 for Avg. Order Value
+import { CircleDollarSign , ShoppingBag , Users, Archive , Package, Clock, CheckCircle } from "lucide-react" // Changed TrendingUp to BarChart3 for Avg. Order Value
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -62,21 +62,21 @@ const topPerformingProducts = [
     unitsSold: "1250 units sold",
     price: "$1,999.00",
     revenueText: "Revenue", // Changed from 'revenue' to avoid conflict if it were a number
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
   {
     name: "Brightening Serum",
     unitsSold: "980 units sold",
     price: "$1,999.00",
     revenueText: "Revenue",
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
   {
     name: "Nourishing Cream",
     unitsSold: "875 units sold",
     price: "$1,999.00",
     revenueText: "Revenue",
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
   {
     // Added more to fill space as per Figma
@@ -84,21 +84,21 @@ const topPerformingProducts = [
     unitsSold: "875 units sold",
     price: "$1,999.00",
     revenueText: "Revenue",
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
   {
     name: "Hydrating Essence", // Duplicate name from Figma
     unitsSold: "1250 units sold",
     price: "$1,999.00",
     revenueText: "Revenue",
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
   {
     name: "Brightening Serum", // Duplicate name from Figma
     unitsSold: "980 units sold",
     price: "$1,999.00",
     revenueText: "Revenue",
-    image: "/placeholder.svg?height=50&width=50",
+    image: "/images/dashboardlistImage.png",
   },
 ]
 
@@ -108,10 +108,10 @@ export default function DashboardOverviewPage() {
       <h2 className="text-2xl font-semibold text-brand-text-dark">Dashboard Overview</h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Revenue" value="$28,450" icon={DollarSign} />
-        <StatCard title="Orders" value="312" icon={ShoppingCart} />
+        <StatCard title="Total Revenue" value="$28,450" icon={CircleDollarSign } />
+        <StatCard title="Orders" value="312" icon={ShoppingBag } />
         <StatCard title="Customers" value="157" icon={Users} description="Active customers" /> {/* Corrected value */}
-        <StatCard title="Avg. Order Value" value="$91.19" icon={BarChart3} />
+        <StatCard title="Avg. Order Value" value="$91.19" icon={Archive } />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -123,7 +123,7 @@ export default function DashboardOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
+            <CardTitle className="text-[20px] font-semibold leading-[120%]">Recent Orders</CardTitle>
             {/* View All button is part of CardContent in Figma */}
           </CardHeader>
           <CardContent className="pt-0">
@@ -133,15 +133,15 @@ export default function DashboardOverviewPage() {
                 return (
                   <li
                     key={order.id}
-                    className="flex items-center space-x-3 py-2 border-b border-gray-100 last:border-b-0"
+                    className="flex items-center space-x-3 py-2 "
                   >
                     <Icon className={`h-5 w-5 ${order.statusColor}`} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-brand-text-dark">{order.id}</p>
-                      <p className="text-xs text-gray-500">{order.customer}</p>
+                    <div className="flex-1 space-y-3">
+                      <p className="text-base font-semibold text-[#09090B]">{order.id}</p>
+                      <p className="text-[14px] text-[#71717A] font-medium">{order.customer}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-brand-text-dark">{order.amount}</p>
+                      <p className="text-base font-semibold text-[#09090B] leading-[120%] mb-3">{order.amount}</p>
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded-full ${order.bgColor} ${order.statusColor}`}
                       >
@@ -152,15 +152,15 @@ export default function DashboardOverviewPage() {
                 )
               })}
             </ul>
-            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
-              <Link href="/dashboard/orders">View All</Link>
+            <Button variant="outline" size="sm" className="w-full mt-4 h-[45px] text-base font-semibold" asChild>
+              <Link className="text-[#1E2A38] text-base font-semibold leading-[120]" href="/dashboard/orders">View All</Link>
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Top Performing Products</CardTitle>
+            <CardTitle className="text-[20px] font-semibold leading-[120%]">Top Performing Products</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-1">
@@ -172,17 +172,17 @@ export default function DashboardOverviewPage() {
                   <Image
                     src={product.image || "/placeholder.svg"}
                     alt={product.name}
-                    width={40} // Figma shows smaller images here
-                    height={40}
-                    className="rounded-md object-cover"
+                    width={100} // Figma shows smaller images here
+                    height={100}
+                    className="object-cover h-[60px] w-[60px]"
                   />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-brand-text-dark">{product.name}</p>
-                    <p className="text-xs text-gray-500">{product.unitsSold}</p>
+                    <p className="text-base font-semibold leading-[120%] text-[#09090B] mb-2">{product.name}</p>
+                    <p className="text-[14px] font-medium text-[#71717A]">{product.unitsSold}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-brand-text-dark">{product.price}</p>
-                    <p className="text-xs text-gray-500">{product.revenueText}</p>
+                    <p className="text-base font-semibold text-[#09090B] mb-2">{product.price}</p>
+                    <p className="text-xs text-[#1E2A38] font-semibold">{product.revenueText}</p>
                   </div>
                 </li>
               ))}

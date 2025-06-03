@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import React from "react"
+import React from "react";
 
-import { useState } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -17,20 +17,29 @@ import {
   SheetDescription,
   SheetFooter,
   SheetClose,
-} from "@/components/ui/sheet"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { addProductAction, updateProductAction } from "@/app/dashboard/products/actions"
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  addProductAction,
+  updateProductAction,
+} from "@/app/dashboard/products/actions";
 import {
   type Product,
   type ProductStatus,
   productCategories,
   productStatuses,
   productTags,
-} from "@/app/dashboard/products/types"
-import { UploadCloud, X } from "lucide-react"
-import Image from "next/image"
+} from "@/app/dashboard/products/types";
+import { UploadCloud, X } from "lucide-react";
+import Image from "next/image";
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -42,23 +51,32 @@ const productSchema = z.object({
   tags: z.array(z.string()).optional(),
   vendor: z.string().optional(),
   thumbnailUrl: z.string().optional(), // For simplicity, we'll just use a string URL. Real upload is complex.
-  status: z.custom<ProductStatus>((val) => productStatuses.includes(val as ProductStatus), {
-    message: "Invalid status",
-  }),
-})
+  status: z.custom<ProductStatus>(
+    (val) => productStatuses.includes(val as ProductStatus),
+    {
+      message: "Invalid status",
+    }
+  ),
+});
 
-type ProductFormValues = z.infer<typeof productSchema>
+type ProductFormValues = z.infer<typeof productSchema>;
 
 interface AddProductSheetProps {
-  isOpen: boolean
-  onOpenChange: (isOpen: boolean) => void
-  productToEdit?: Product | null
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  productToEdit?: Product | null;
 }
 
-export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProductSheetProps) {
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(productToEdit?.thumbnailUrl || null)
+export function AddProductSheet({
+  isOpen,
+  onOpenChange,
+  productToEdit,
+}: AddProductSheetProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+    productToEdit?.thumbnailUrl || null
+  );
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -86,7 +104,7 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           thumbnailUrl: "",
           status: "Active",
         },
-  })
+  });
 
   // Reset form when productToEdit changes or sheet closes
   React.useEffect(() => {
@@ -103,8 +121,8 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           vendor: productToEdit.vendor || "",
           thumbnailUrl: productToEdit.thumbnailUrl || "",
           status: productToEdit.status,
-        })
-        setThumbnailPreview(productToEdit.thumbnailUrl || null)
+        });
+        setThumbnailPreview(productToEdit.thumbnailUrl || null);
       } else {
         form.reset({
           name: "",
@@ -117,89 +135,104 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           thumbnailUrl: "",
           status: "Active",
           costPrice: undefined,
-        })
-        setThumbnailPreview(null)
+        });
+        setThumbnailPreview(null);
       }
     }
-  }, [isOpen, productToEdit, form])
+  }, [isOpen, productToEdit, form]);
 
   const onSubmit = async (data: ProductFormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      let result
+      let result;
       if (productToEdit) {
         result = await updateProductAction(productToEdit.id, {
           ...data,
           thumbnailUrl: thumbnailPreview || data.thumbnailUrl,
-        })
+        });
       } else {
-        result = await addProductAction({ ...data, thumbnailUrl: thumbnailPreview || data.thumbnailUrl || "" })
+        result = await addProductAction({
+          ...data,
+          thumbnailUrl: thumbnailPreview || data.thumbnailUrl || "",
+        });
       }
 
       if (result.success) {
         toast({
           title: productToEdit ? "Product Updated" : "Product Added",
           description: result.message,
-        })
-        onOpenChange(false) // Close sheet on success
-        form.reset()
-        setThumbnailPreview(null)
+        });
+        onOpenChange(false); // Close sheet on success
+        form.reset();
+        setThumbnailPreview(null);
       } else {
         toast({
           title: "Error",
           description: result.message,
           variant: "destructive",
-        })
+        });
       }
-    } catch  {
+    } catch {
       toast({
         title: "Error",
         description: "An unexpected error occurred.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Simulate file upload by setting a placeholder URL
-  const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleThumbnailChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string)
+        setThumbnailPreview(reader.result as string);
         // In a real app, you would upload the file and get a URL
         // form.setValue("thumbnailUrl", "simulated_url_after_upload.jpg");
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   return (
     <Sheet
       open={isOpen}
       onOpenChange={(open) => {
-        onOpenChange(open)
+        onOpenChange(open);
         if (!open) {
-          form.reset() // Reset form when closing
-          setThumbnailPreview(null)
+          form.reset(); // Reset form when closing
+          setThumbnailPreview(null);
         }
       }}
     >
       <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{productToEdit ? "Edit Product" : "Add New Product"}</SheetTitle>
+          <SheetTitle>
+            {productToEdit ? "Edit Product" : "Add New Product"}
+          </SheetTitle>
           <SheetDescription>
-            {productToEdit ? "Update the details of this product." : "Create a new product in your catalog."}
+            {productToEdit
+              ? "Update the details of this product."
+              : "Create a new product in your catalog."}
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div>
             <Label htmlFor="name">Product Name</Label>
-            <Input id="name" {...form.register("name")} />
+            <Input
+              className="mt-2 h-[44px]"
+              id="name"
+              {...form.register("name")}
+            />
             {form.formState.errors.name && (
-              <p className="text-xs text-red-500 mt-1">{form.formState.errors.name.message}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {form.formState.errors.name.message}
+              </p>
             )}
           </div>
 
@@ -210,8 +243,13 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
                 name="category"
                 control={form.control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="h-11">
+                      {" "}
+                      {/* h-11 = 44px */}
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -225,17 +263,23 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
                 )}
               />
               {form.formState.errors.category && (
-                <p className="text-xs text-red-500 mt-1">{form.formState.errors.category.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.category.message}
+                </p>
               )}
             </div>
+
             <div>
               <Label htmlFor="status">Status</Label>
               <Controller
                 name="status"
                 control={form.control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -249,7 +293,9 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
                 )}
               />
               {form.formState.errors.status && (
-                <p className="text-xs text-red-500 mt-1">{form.formState.errors.status.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.status.message}
+                </p>
               )}
             </div>
           </div>
@@ -257,31 +303,54 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="price">Price ($)</Label>
-              <Input id="price" type="number" step="0.01" {...form.register("price")} />
+              <Input
+                id="price"
+                type="number"
+                className="mt-2 h-[44px]"
+                step="0.01"
+                {...form.register("price")}
+              />
               {form.formState.errors.price && (
-                <p className="text-xs text-red-500 mt-1">{form.formState.errors.price.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.price.message}
+                </p>
               )}
             </div>
             <div>
               <Label htmlFor="costPrice">Cost Price ($) (Optional)</Label>
-              <Input id="costPrice" type="number" step="0.01" {...form.register("costPrice")} />
+              <Input
+                id="costPrice"
+                type="number"
+                className="mt-2 h-[44px]"
+                step="0.01"
+                {...form.register("costPrice")}
+              />
               {form.formState.errors.costPrice && (
-                <p className="text-xs text-red-500 mt-1">{form.formState.errors.costPrice.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.costPrice.message}
+                </p>
               )}
             </div>
           </div>
 
           <div>
             <Label htmlFor="stock">Stock Quantity</Label>
-            <Input id="stock" type="number" {...form.register("stock")} />
+            <Input className="mt-2 h-[44px]" id="stock" type="number" {...form.register("stock")} />
             {form.formState.errors.stock && (
-              <p className="text-xs text-red-500 mt-1">{form.formState.errors.stock.message}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {form.formState.errors.stock.message}
+              </p>
             )}
           </div>
 
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...form.register("description")} placeholder="Type your message here." />
+            <Textarea
+              id="description"
+              className="mt-2 h-[108px]"
+              {...form.register("description")}
+              placeholder="Type your message here."
+            />
           </div>
 
           <div>
@@ -291,16 +360,19 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
               control={form.control}
               render={({ field }) => (
                 <Select
-                  onValueChange={(value) => field.onChange(value ? value.split(",") : [])}
+                  onValueChange={(value) =>
+                    field.onChange(value ? value.split(",") : [])
+                  }
                   value={field.value?.join(",") || ""}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 mt-2">
                     <SelectValue placeholder="Select tags (multi-select not directly supported, use CSV or custom component)" />
                   </SelectTrigger>
                   <SelectContent>
                     {/* Basic multi-select simulation. For real multi-select, use a custom component or library */}
                     <p className="p-2 text-xs text-muted-foreground">
-                      Tip: For multiple, select one, then re-open to add more (not ideal).
+                      Tip: For multiple, select one, then re-open to add more
+                      (not ideal).
                     </p>
                     {productTags.map((tag) => (
                       <SelectItem key={tag} value={tag}>
@@ -312,13 +384,14 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
               )}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              For multiple tags, you might need a more advanced multi-select component. This is a basic version.
+              For multiple tags, you might need a more advanced multi-select
+              component. This is a basic version.
             </p>
           </div>
 
           <div>
             <Label htmlFor="vendor">Vendor (Optional)</Label>
-            <Input id="vendor" {...form.register("vendor")} />
+            <Input className="mt-2 h-[44px]" id="vendor" {...form.register("vendor")} />
           </div>
 
           <div>
@@ -363,33 +436,35 @@ export function AddProductSheet({ isOpen, onOpenChange, productToEdit }: AddProd
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                <p className="text-xs text-gray-500">
+                  PNG, JPG, GIF up to 10MB
+                </p>
               </div>
             </div>
           </div>
 
-          <SheetFooter className="pt-4">
+          <SheetFooter className="pt-4 ">
             <SheetClose asChild>
-              <Button type="button" variant="outline">
+              <Button className="rounded-full w-[117px] h-[51px] border border-[#000000]" type="button" variant="outline">
                 Cancel
               </Button>
             </SheetClose>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-brand-black text-brand-white hover:bg-brand-black/90"
+              className="h-[51px] w-[101px] rounded-full border border-[#000000]"
             >
               {isSubmitting
                 ? productToEdit
                   ? "Saving..."
                   : "Adding..."
                 : productToEdit
-                  ? "Save Changes"
-                  : "Add Product"}
+                ? "Save Changes"
+                : "Save"}
             </Button>
           </SheetFooter>
         </form>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

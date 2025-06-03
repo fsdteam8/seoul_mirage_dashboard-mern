@@ -5,7 +5,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link href="/dashboard" className={`inline-block ${className}`}>
       <Image
-        src="/logo.png" // Using the uploaded logo
+        src="/images/sidebarImage.png" // Using the uploaded logo
         alt="Seoul Mirage Logo"
         width={150}
         height={50}

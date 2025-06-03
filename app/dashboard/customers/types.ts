@@ -24,7 +24,7 @@ export const mockCustomers: Customer[] = Array.from({ length: 30 }, (_, i) => ({
   totalSpent: Number.parseFloat((Math.random() * 500 + 50).toFixed(2)),
   lastActive: generateRandomDate(new Date(2022, 0, 1), new Date()),
   status: i % 4 === 0 ? "Inactive" : "Active", // Make some inactive
-  avatarUrl: `/placeholder.svg?height=40&width=40&query=avatar${i}`,
+   avatarUrl: `/images/dashboardlistImage.png`, 
 }))
 
 export const customerStatuses: CustomerStatus[] = ["Active", "Inactive"]
