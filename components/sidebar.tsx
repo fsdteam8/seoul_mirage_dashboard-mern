@@ -23,7 +23,7 @@ const navigation = [
   { name: "Categories", href: "/dashboard/categories"},
   { name: "Orders", href: "/dashboard/orders"},
   { name: "Customers", href: "/dashboard/customers"},
-  { name: "Promo Codes", href: "/dashboard/promo-codes"},
+  { name: "Promo Codes", href: "/dashboard/promocodes"},
   { name: "Settings", href: "/dashboard/settings"},
 ];
 

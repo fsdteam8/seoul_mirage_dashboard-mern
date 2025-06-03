@@ -369,7 +369,7 @@ export function ProductTable() {
         </div>
       </div>
 
-      {/* Pagination */}
+    
 
       <AddProductSheet
         isOpen={isSheetOpen}

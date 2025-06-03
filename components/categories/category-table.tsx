@@ -192,11 +192,10 @@ export function CategoryTable() {
                   <TableCell>{category.name}</TableCell>
                   <TableCell className="max-w-xs truncate text-sm text-gray-600">
                     {category.description?.slice(0, 30) || "-"}...
-                    
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">
-                      {category.type}
-                    </TableCell>
+                    {category.type}
+                  </TableCell>
                   <TableCell className="text-center">
                     {category.productCount}
                   </TableCell>
@@ -232,46 +231,47 @@ export function CategoryTable() {
               ))}
           </TableBody>
         </Table>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t px-6 py-4">
+            <div className="text-sm text-gray-700">
+              Showing{" "}
+              <span className="font-medium">
+                {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-medium">
+                {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}
+              </span>{" "}
+              of <span className="font-medium">{totalCount}</span> results
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <span className="p-2 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4">
-          <div className="text-sm text-gray-700">
-            Showing{" "}
-            <span className="font-medium">
-              {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-            </span>{" "}
-            to{" "}
-            <span className="font-medium">
-              {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}
-            </span>{" "}
-            of <span className="font-medium">{totalCount}</span> results
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1 || isLoading}
-            >
-              Previous
-            </Button>
-            <span className="p-2 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages || isLoading}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
       <AddCategorySheet
         isOpen={isSheetOpen}
         onOpenChange={setIsSheetOpen}
