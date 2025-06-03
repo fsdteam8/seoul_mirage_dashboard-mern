@@ -12,7 +12,7 @@ const data = [
   { month: "June", sales: 214 },
 ]
 
-const CHART_COLOR = "#d81b60" // Figma pink
+const CHART_COLOR = "#AD1457" // Figma pink
 
 export function SalesOverviewChart() {
   return (

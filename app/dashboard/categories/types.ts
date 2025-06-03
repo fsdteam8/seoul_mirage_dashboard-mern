@@ -2,6 +2,7 @@ export interface Category {
     id: string
     name: string
     description?: string
+    type: string
     productCount: number // Number of products associated with this category
     createdAt: string // Should be Date in a real app
     updatedAt: string // Should be Date in a real app
@@ -18,6 +19,7 @@ export interface Category {
       name: "Essences",
       description: "Concentrated formulas for targeted skin concerns.",
       productCount: 5,
+      type: "essence",
       createdAt: generateRandomDate(new Date(2023, 0, 1), new Date()),
       updatedAt: generateRandomDate(new Date(2023, 6, 1), new Date()),
     },
@@ -26,6 +28,7 @@ export interface Category {
       name: "Cleansers",
       description: "Gentle and effective cleansers for all skin types.",
       productCount: 3,
+      type: "essence",
       createdAt: generateRandomDate(new Date(2023, 1, 1), new Date()),
       updatedAt: generateRandomDate(new Date(2023, 7, 1), new Date()),
     },
@@ -34,6 +37,7 @@ export interface Category {
       name: "Makeup",
       description: "Cosmetics for enhancing beauty.",
       productCount: 10,
+      type: "essence",
       createdAt: generateRandomDate(new Date(2023, 2, 1), new Date()),
       updatedAt: generateRandomDate(new Date(2023, 8, 1), new Date()),
     },
@@ -42,12 +46,14 @@ export interface Category {
       name: "Suncare",
       description: "Protection against harmful UV rays.",
       productCount: 4,
+      type: "essence",
       createdAt: generateRandomDate(new Date(2023, 3, 1), new Date()),
       updatedAt: generateRandomDate(new Date(2023, 9, 1), new Date()),
     },
     {
       id: "CAT005",
       name: "Masks",
+      type: "essence",
       description: "Intensive treatments for various skin needs.",
       productCount: 7,
       createdAt: generateRandomDate(new Date(2023, 4, 1), new Date()),
@@ -57,6 +63,7 @@ export interface Category {
     {
       id: "CAT006",
       name: "Eye Care",
+      type: "grooming",
       description: "Specialized products for the delicate eye area.",
       productCount: 3,
       createdAt: generateRandomDate(new Date(2023, 0, 15), new Date()),
@@ -65,6 +72,7 @@ export interface Category {
     {
       id: "CAT007",
       name: "Body Care",
+      type: "treatment",
       description: "Nourishing and hydrating products for the body.",
       productCount: 6,
       createdAt: generateRandomDate(new Date(2023, 1, 10), new Date()),
@@ -73,6 +81,7 @@ export interface Category {
     {
       id: "CAT008",
       name: "Serums",
+      type: "resurfacing",
       description: "Potent formulations with active ingredients.",
       productCount: 8,
       createdAt: generateRandomDate(new Date(2023, 2, 5), new Date()),
@@ -81,6 +90,7 @@ export interface Category {
     {
       id: "CAT009",
       name: "Toners",
+      type: "face",
       description: "Balancing and prepping solutions for the skin.",
       productCount: 4,
       createdAt: generateRandomDate(new Date(2023, 3, 20), new Date()),
@@ -89,6 +99,7 @@ export interface Category {
     {
       id: "CAT010",
       name: "Moisturizers",
+      type: "deep",
       description: "Hydrating creams and lotions for daily use.",
       productCount: 9,
       createdAt: generateRandomDate(new Date(2023, 4, 25), new Date()),

@@ -21,8 +21,10 @@ import { useToast } from "@/hooks/use-toast"
 import { addCategoryAction, updateCategoryAction } from "@/app/dashboard/categories/actions"
 import type { Category } from "@/app/dashboard/categories/types"
 
+// ✅ Updated schema to include `type`
 const categorySchema = z.object({
   name: z.string().min(2, "Category name must be at least 2 characters").max(50, "Category name too long"),
+  type: z.string().min(2, "Category type must be at least 2 characters").max(50, "Category type too long"),
   description: z.string().max(200, "Description too long").optional(),
 })
 
@@ -42,6 +44,7 @@ export function AddCategorySheet({ isOpen, onOpenChange, categoryToEdit }: AddCa
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
+      type: "",
       description: "",
     },
   })
@@ -51,11 +54,13 @@ export function AddCategorySheet({ isOpen, onOpenChange, categoryToEdit }: AddCa
       if (categoryToEdit) {
         form.reset({
           name: categoryToEdit.name,
+          type: categoryToEdit.type || "",
           description: categoryToEdit.description || "",
         })
       } else {
         form.reset({
           name: "",
+          type: "",
           description: "",
         })
       }
@@ -115,17 +120,29 @@ export function AddCategorySheet({ isOpen, onOpenChange, categoryToEdit }: AddCa
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          {/* Name */}
           <div>
             <Label htmlFor="name">Category Name</Label>
-            <Input id="name" {...form.register("name")} />
+            <Input className="mt-3" id="name" {...form.register("name")} />
             {form.formState.errors.name && (
               <p className="text-xs text-red-500 mt-1">{form.formState.errors.name.message}</p>
             )}
           </div>
 
+          {/* Type */}
+          <div>
+            <Label htmlFor="type">Category Type</Label>
+            <Input className="mt-3" id="type" {...form.register("type")} />
+            {form.formState.errors.type && (
+              <p className="text-xs text-red-500 mt-1">{form.formState.errors.type.message}</p>
+            )}
+          </div>
+
+          {/* Description */}
           <div>
             <Label htmlFor="description">Description (Optional)</Label>
             <Textarea
+              className="mt-3"
               id="description"
               {...form.register("description")}
               placeholder="A brief description of the category"
@@ -135,6 +152,7 @@ export function AddCategorySheet({ isOpen, onOpenChange, categoryToEdit }: AddCa
             )}
           </div>
 
+          {/* Buttons */}
           <SheetFooter className="pt-4">
             <SheetClose asChild>
               <Button type="button" variant="outline">
@@ -160,3 +178,4 @@ export function AddCategorySheet({ isOpen, onOpenChange, categoryToEdit }: AddCa
     </Sheet>
   )
 }
+

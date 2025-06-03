@@ -1,3 +1,4 @@
+
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
@@ -7,7 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Search, Edit2, Trash2, PlusCircle, Package, ListChecks } from "lucide-react"
+import {
+  MoreHorizontal,
+  Search,
+  Edit2,
+  Trash2,
+  PlusCircle,
+  Package,
+  ListChecks,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import type { Category } from "@/app/dashboard/categories/types"
 import { getCategories, deleteCategoryAction } from "@/app/dashboard/categories/actions"
 import { useToast } from "@/hooks/use-toast"
@@ -15,6 +26,114 @@ import { AddCategorySheet } from "./add-category-sheet"
 import { StatCard } from "@/components/stat-card"
 
 const ITEMS_PER_PAGE = 5
+
+// Enhanced Pagination Component
+interface PaginationProps {
+  currentPage: number
+  totalPages: number
+  totalCount: number
+  itemsPerPage: number
+  isLoading?: boolean
+  onPageChange: (page: number) => void
+}
+
+function EnhancedPagination({
+  currentPage,
+  totalPages,
+  totalCount,
+  itemsPerPage,
+  isLoading = false,
+  onPageChange,
+}: PaginationProps) {
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show pages around current page
+      let start = Math.max(1, currentPage - 2)
+      let end = Math.min(totalPages, currentPage + 2)
+
+      // Adjust if we're near the beginning or end
+      if (currentPage <= 3) {
+        end = Math.min(5, totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        start = Math.max(1, totalPages - 4)
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+    }
+
+    return pages
+  }
+
+  const pageNumbers = getPageNumbers()
+  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalCount)
+
+  return (
+    <div className="flex items-center justify-between border-t bg-white px-6 py-4">
+      {/* Results count */}
+      <div className="text-sm text-gray-700">
+        Showing <span className="font-medium">{startItem}</span> to <span className="font-medium">{endItem}</span> of{" "}
+        <span className="font-medium">{totalCount}</span> results
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex items-center space-x-1">
+        {/* Previous button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1 || isLoading}
+          className="h-9 w-9 text-sm"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+   
+        </Button>
+
+        {/* Page numbers */}
+        <div className="flex items-center space-x-1 mx-2">
+          {pageNumbers.map((pageNum) => (
+            <Button
+              key={pageNum}
+              variant={currentPage === pageNum ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(pageNum)}
+              disabled={isLoading}
+              className={`h-9 w-9 p-0 ${
+                currentPage === pageNum ? "bg-gray-900 text-white hover:bg-gray-800" : "hover:bg-gray-50"
+              }`}
+            >
+              {pageNum}
+            </Button>
+          ))}
+        </div>
+
+        {/* Next button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages || isLoading}
+          className="h-9 w-9 text-sm"
+        >
+ 
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export function CategoryTable() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -46,6 +165,10 @@ export function CategoryTable() {
     setCurrentPage(1)
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
     if (!confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`))
       return
@@ -55,7 +178,11 @@ export function CategoryTable() {
         toast({ title: "Category Deleted", description: result.message })
         fetchCategoriesData() // Refresh data
       } else {
-        toast({ title: "Error Deleting Category", description: result.message, variant: "destructive" })
+        toast({
+          title: "Error Deleting Category",
+          description: result.message,
+          variant: "destructive",
+        })
       }
     })
   }
@@ -104,7 +231,7 @@ export function CategoryTable() {
             placeholder="Search categories by name or description..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="pl-10 w-full"
+            className="pl-10 w-full h-[49px]"
           />
         </div>
       </div>
@@ -116,6 +243,7 @@ export function CategoryTable() {
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead className="text-center">Products</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Updated At</TableHead>
@@ -128,14 +256,14 @@ export function CategoryTable() {
                 .fill(0)
                 .map((_, index) => (
                   <TableRow key={`skeleton-cat-${index}`}>
-                    <TableCell colSpan={7} className="h-16 text-center">
+                    <TableCell colSpan={8} className="h-16 text-center">
                       Loading categories...
                     </TableCell>
                   </TableRow>
                 ))}
             {!isLoading && categories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                   No categories found.
                 </TableCell>
               </TableRow>
@@ -146,8 +274,9 @@ export function CategoryTable() {
                   <TableCell className="font-medium">{category.id}</TableCell>
                   <TableCell>{category.name}</TableCell>
                   <TableCell className="max-w-xs truncate text-sm text-gray-600">
-                    {category.description || "-"}
+                    {category.description?.slice(0, 30) || "-"}...
                   </TableCell>
+                  <TableCell className="text-sm text-gray-600">{category.type}</TableCell>
                   <TableCell className="text-center">{category.productCount}</TableCell>
                   <TableCell>{category.createdAt}</TableCell>
                   <TableCell>{category.updatedAt}</TableCell>
@@ -177,38 +306,20 @@ export function CategoryTable() {
               ))}
           </TableBody>
         </Table>
+
+        {/* Enhanced Pagination */}
+        {totalPages > 1 && (
+          <EnhancedPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            itemsPerPage={ITEMS_PER_PAGE}
+            isLoading={isLoading}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
-            <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}</span> of{" "}
-            <span className="font-medium">{totalCount}</span> results
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1 || isLoading}
-            >
-              Previous
-            </Button>
-            <span className="p-2 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || isLoading}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
       <AddCategorySheet isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} categoryToEdit={categoryToEdit} />
     </div>
   )
