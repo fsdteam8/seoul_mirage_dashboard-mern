@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import type React from "react"
@@ -10,7 +9,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MoreHorizontal, Search, Edit2, Trash2, Package, AlertTriangle, DollarSign, PlusCircle } from "lucide-react"
+import {
+  MoreHorizontal,
+  Search,
+  Edit2,
+  Trash2,
+  Package,
+  AlertTriangle,
+  TrendingUp,
+  PackageX,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import {
   type Product,
   type ProductStatus,
@@ -24,6 +35,114 @@ import { AddProductSheet } from "./add-product-sheet"
 import { StatCard } from "@/components/stat-card"
 
 const ITEMS_PER_PAGE = 5
+
+// Enhanced Pagination Component
+interface PaginationProps {
+  currentPage: number
+  totalPages: number
+  totalCount: number
+  itemsPerPage: number
+  isLoading?: boolean
+  onPageChange: (page: number) => void
+}
+
+function EnhancedPagination({
+  currentPage,
+  totalPages,
+  totalCount,
+  itemsPerPage,
+  isLoading = false,
+  onPageChange,
+}: PaginationProps) {
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show pages around current page
+      let start = Math.max(1, currentPage - 2)
+      let end = Math.min(totalPages, currentPage + 2)
+
+      // Adjust if we're near the beginning or end
+      if (currentPage <= 3) {
+        end = Math.min(5, totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        start = Math.max(1, totalPages - 4)
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+    }
+
+    return pages
+  }
+
+  const pageNumbers = getPageNumbers()
+  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalCount)
+
+  return (
+    <div className="flex items-center justify-between border-t bg-white px-6 py-4">
+      {/* Results count */}
+      <div className="text-sm text-gray-700">
+        Showing <span className="font-medium">{startItem}</span> to <span className="font-medium">{endItem}</span> of{" "}
+        <span className="font-medium">{totalCount}</span> results
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex items-center space-x-1">
+        {/* Previous button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1 || isLoading}
+          className="h-9 w-9 text-sm"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+ 
+        </Button>
+
+        {/* Page numbers */}
+        <div className="flex items-center space-x-1 mx-2">
+          {pageNumbers.map((pageNum) => (
+            <Button
+              key={pageNum}
+              variant={currentPage === pageNum ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(pageNum)}
+              disabled={isLoading}
+              className={`h-9 w-9 p-0 ${
+                currentPage === pageNum ? "bg-gray-900 text-white hover:bg-gray-800" : "hover:bg-gray-50"
+              }`}
+            >
+              {pageNum}
+            </Button>
+          ))}
+        </div>
+
+        {/* Next button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages || isLoading}
+          className="h-9 w-9 text-sm"
+        >
+
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export function ProductTable() {
   const [products, setProducts] = useState<Product[]>([])
@@ -50,6 +169,7 @@ export function ProductTable() {
 
   useEffect(() => {
     fetchProductsData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, categoryFilter, statusFilter])
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +187,10 @@ export function ProductTable() {
     setCurrentPage(1)
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return
     startTransition(async () => {
@@ -75,7 +199,11 @@ export function ProductTable() {
         toast({ title: "Product Deleted", description: result.message })
         fetchProductsData() // Refresh data
       } else {
-        toast({ title: "Error", description: result.message, variant: "destructive" })
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        })
       }
     })
   }
@@ -116,31 +244,31 @@ export function ProductTable() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h2 className="text-2xl font-semibold text-brand-text-dark">Manage Products</h2>
-        <Button onClick={handleAddProduct} className="bg-brand-black text-brand-white hover:bg-brand-black/80">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Product
+        <Button onClick={handleAddProduct} className="bg-brand-black text-brand-white hover:bg-brand-black/80 h-[40px]">
+          <Plus className="mr-2 h-4 w-4" /> Add Product
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Products" value={String(totalProductsCount)} icon={Package} />
         <StatCard title="Low Stock" value={String(lowStockCount)} icon={AlertTriangle} />
-        <StatCard title="Out of Stock" value={String(outOfStockCount)} icon={AlertTriangle} />
-        <StatCard title="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} icon={DollarSign} />
+        <StatCard title="Out of Stock" value={String(outOfStockCount)} icon={PackageX} />
+        <StatCard title="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} icon={TrendingUp} />
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center gap-4 border border-[#E4E4E7] h-[99px] px-6 rounded-[15px]">
         <div className="relative w-full sm:w-auto sm:flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             type="search"
-            placeholder="Search products by name or ID..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="pl-10 w-full"
+            className="pl-10 w-[264px] h-[49px]"
           />
         </div>
         <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -153,7 +281,7 @@ export function ProductTable() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -168,7 +296,7 @@ export function ProductTable() {
       </div>
 
       <div className="rounded-lg border overflow-hidden">
-        <Table>
+        <Table className="border-none">
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -207,7 +335,7 @@ export function ProductTable() {
                   <TableCell className="font-medium">{product.id}</TableCell>
                   <TableCell>
                     <Image
-                      src={product.thumbnailUrl || "/placeholder.svg"}
+                      src={product.thumbnailUrl || "/placeholder.svg?height=40&width=40&query=product"}
                       alt={product.name}
                       width={40}
                       height={40}
@@ -261,39 +389,22 @@ export function ProductTable() {
               ))}
           </TableBody>
         </Table>
+
+        {/* Enhanced Pagination */}
+        {totalPages > 1 && (
+          <EnhancedPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            itemsPerPage={ITEMS_PER_PAGE}
+            isLoading={isLoading}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between pt-4">
-        <div className="text-sm text-gray-700">
-          Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
-          <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}</span> of{" "}
-          <span className="font-medium">{totalCount}</span> results
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1 || isLoading}
-          >
-            Previous
-          </Button>
-          {/* Simple page number display, can be enhanced */}
-          <span className="p-2 text-sm">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages || isLoading}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
       <AddProductSheet isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} productToEdit={productToEdit} />
     </div>
   )
 }
+
