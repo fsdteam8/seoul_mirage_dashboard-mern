@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Settings, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -24,6 +25,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   const router = useRouter();
 
   const handleLogout = () => {
+    signOut();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
