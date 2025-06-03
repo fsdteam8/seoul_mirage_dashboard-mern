@@ -45,15 +45,24 @@ export default function LoginPage() {
         password: data.password,
         redirect: false,
       });
-      console.log(res);
+
+      if (!res?.ok) {
+        toast({
+          title: "Login Failed",
+          description: res?.error || "An error occurred during login.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (res?.ok) {
         toast({
           title: "Login Successful",
           description: "You have successfully logged in.",
           variant: "default",
         });
-        router.push("/dashboard");
       }
+      router.push("/dashboard");
     } catch {
       toast({
         title: "Login Failed",
