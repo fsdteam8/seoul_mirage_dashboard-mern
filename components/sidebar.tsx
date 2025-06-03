@@ -92,12 +92,12 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </Link>
         ))}
       </nav>
-      <div className="mt-auto border-t border-brand-pink/20 p-2">
+      <div className="mt-auto p-2">
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center rounded-md px-2 py-2 text-sm font-medium text-brand-text-dark hover:bg-brand-pink/20 hover:text-brand-black",
+            "w-full flex items-center rounded-md px-2 py-2 text-sm font-medium text-brand-text-dark hover:bg-brand-pink/20 hover:text-brand-black border border-[#BFBFBF]",
             !isOpen && "justify-center"
           )}
           title="Logout"
