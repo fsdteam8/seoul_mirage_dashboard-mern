@@ -438,7 +438,7 @@ export function ProductTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          // onClick={() => handleEditProduct(product)}
+                        // onClick={() => handleEditProduct(product)}
                         >
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
