@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect, useTransition } from "react";
-import Image from "next/image";
+// import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -39,23 +39,34 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
-import {
-  type Product,
-  type ProductStatus,
-  mockProducts,
-  productCategories,
-  productStatuses,
-} from "@/app/dashboard/products/types";
-import {
-  getProducts,
-  deleteProductAction,
-} from "@/app/dashboard/products/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AddProductSheet } from "./add-product-sheet";
 import { StatCard } from "@/components/stat-card";
+import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 5;
+
+// Updated Product interface to match your API response
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+  price: string;
+  category_id: number;
+  status: "active" | "inactive" | "low_stock" | "out_of_stock";
+  cost_price: string;
+  stock_quantity: number;
+  created_at: string;
+  updated_at: string;
+  media: unknown[]; // Replace 'unknown' with a specific Media type if available
+  category: {
+    id: number;
+    name: string;
+  };
+}
 
 // Enhanced Pagination Component
 interface PaginationProps {
@@ -75,22 +86,18 @@ function EnhancedPagination({
   isLoading = false,
   onPageChange,
 }: PaginationProps) {
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Show pages around current page
       let start = Math.max(1, currentPage - 2);
       let end = Math.min(totalPages, currentPage + 2);
 
-      // Adjust if we're near the beginning or end
       if (currentPage <= 3) {
         end = Math.min(5, totalPages);
       } else if (currentPage >= totalPages - 2) {
@@ -111,16 +118,13 @@ function EnhancedPagination({
 
   return (
     <div className="flex items-center justify-between border-t bg-white px-6 py-4">
-      {/* Results count */}
       <div className="text-sm text-gray-700">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalCount}</span> results
       </div>
 
-      {/* Pagination controls */}
       <div className="flex items-center space-x-1">
-        {/* Previous button */}
         <Button
           variant="outline"
           size="sm"
@@ -131,7 +135,6 @@ function EnhancedPagination({
           <ChevronLeft className="h-4 w-4 mr-1" />
         </Button>
 
-        {/* Page numbers */}
         <div className="flex items-center space-x-1 mx-2">
           {pageNumbers.map((pageNum) => (
             <Button
@@ -151,7 +154,6 @@ function EnhancedPagination({
           ))}
         </div>
 
-        {/* Next button */}
         <Button
           variant="outline"
           size="sm"
@@ -167,7 +169,6 @@ function EnhancedPagination({
 }
 
 export function ProductTable() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -176,33 +177,63 @@ export function ProductTable() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [isLoading, startTransition] = useTransition();
   const { toast } = useToast();
-
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  // const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
-  const fetchProductsData = () => {
-    startTransition(async () => {
-      const data = await getProducts(
-        currentPage,
-        ITEMS_PER_PAGE,
-        searchTerm,
-        categoryFilter,
-        statusFilter
+  // Fetch products from your API
+  const {
+    data,
+    error,
+    isLoading: queryLoading,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "products",
+      currentPage,
+      searchTerm,
+      categoryFilter,
+      statusFilter,
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(categoryFilter !== "All" && { category: categoryFilter }),
+        ...(statusFilter !== "All Status" && { status: statusFilter }),
+      });
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
-      setProducts(data.products);
-      setTotalPages(data.totalPages);
-      setTotalCount(data.totalCount);
-    });
-  };
 
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      return res.json();
+    },
+  });
+
+  const products: Product[] = data?.data?.data || [];
+  const pagination = data?.data?.pagination || {};
+
+  // Update pagination info when data changes
   useEffect(() => {
-    fetchProductsData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, categoryFilter, statusFilter]);
+    if (pagination) {
+      setTotalPages(pagination.last_page || 1);
+      setTotalCount(pagination.total || 0);
+    }
+  }, [pagination]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
   const handleCategoryChange = (value: string) => {
@@ -219,61 +250,107 @@ export function ProductTable() {
     setCurrentPage(page);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
+  const handleDeleteProduct = async (productId: number) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
+
     startTransition(async () => {
-      const result = await deleteProductAction(productId);
-      if (result.success) {
-        toast({ title: "Product Deleted", description: result.message });
-        fetchProductsData(); // Refresh data
-      } else {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (res.ok) {
+          toast({
+            title: "Product Deleted",
+            description: "Product has been successfully deleted.",
+          });
+          refetch(); // Refresh data
+        } else {
+          throw new Error("Failed to delete product");
+        }
+      } catch (error) {
+        console.log(error);
         toast({
           title: "Error",
-          description: result.message,
+          description: "Failed to delete product. Please try again.",
           variant: "destructive",
         });
       }
     });
   };
 
-  // const handleEditProduct = (product: Product) => {
-  //   // setProductToEdit(product);
-  //   setIsSheetOpen(true);
-  // };
-
   const handleAddProduct = () => {
-    // setProductToEdit(null); // Ensure no product is being edited
     setIsSheetOpen(true);
   };
 
-  const getStatusBadgeVariant = (status: ProductStatus) => {
-    switch (status) {
-      case "Active":
-        return "default"; // Greenish in figma
-      case "Low Stock":
-        return "secondary"; // Yellowish in figma
-      case "Out of Stock":
-        return "destructive"; // Reddish in figma
-      case "Archived":
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "default";
+      case "low_stock":
+        return "secondary";
+      case "out_of_stock":
+        return "destructive";
+      case "inactive":
         return "outline";
       default:
         return "default";
     }
   };
 
-  // Calculate stats based on all products (not just current page)
-  // In a real app, these would be fetched from the backend or calculated on all client-side data if small enough
-  const totalProductsCount = mockProducts.length; // Using mockProducts for overall stats
-  const lowStockCount = mockProducts.filter(
-    (p) => p.status === "Low Stock"
+  const getStatusDisplay = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "Active";
+      case "low_stock":
+        return "Low Stock";
+      case "out_of_stock":
+        return "Out of Stock";
+      case "inactive":
+        return "Inactive";
+      default:
+        return status;
+    }
+  };
+
+  const formatPrice = (price: string | number) => {
+    return `$${Number.parseFloat(price.toString()).toFixed(2)}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  // Calculate stats
+  const totalProductsCount = totalCount;
+  const lowStockCount = products.filter((p) => p.status === "low_stock").length;
+  const outOfStockCount = products.filter(
+    (p) => p.status === "out_of_stock"
   ).length;
-  const outOfStockCount = mockProducts.filter(
-    (p) => p.status === "Out of Stock"
-  ).length;
-  const totalRevenue = mockProducts.reduce(
-    (sum, p) => sum + (p.revenue ?? 0),
+  const totalValue = products.reduce(
+    (sum, p) => sum + Number.parseFloat(p.price) * p.stock_quantity,
     0
   );
+
+  // Get unique categories for filter
+  const categories = Array.from(new Set(products.map((p) => p.category.name)));
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">Error loading products</p>
+          <Button onClick={() => refetch()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -306,8 +383,8 @@ export function ProductTable() {
           icon={PackageX}
         />
         <StatCard
-          title="Total Revenue"
-          value={`$${totalRevenue.toLocaleString()}`}
+          title="Total Value"
+          value={`$${totalValue.toLocaleString()}`}
           icon={TrendingUp}
         />
       </div>
@@ -317,7 +394,7 @@ export function ProductTable() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             type="search"
-            placeholder="Search..."
+            placeholder="Search products..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="pl-10 w-[264px] h-[49px]"
@@ -329,7 +406,7 @@ export function ProductTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Categories</SelectItem>
-            {productCategories.map((cat) => (
+            {categories.map((cat) => (
               <SelectItem key={cat} value={cat}>
                 {cat}
               </SelectItem>
@@ -342,11 +419,10 @@ export function ProductTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All Status">All Status</SelectItem>
-            {productStatuses.map((stat) => (
-              <SelectItem key={stat} value={stat}>
-                {stat}
-              </SelectItem>
-            ))}
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="low_stock">Low Stock</SelectItem>
+            <SelectItem value="out_of_stock">Out of Stock</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -356,77 +432,98 @@ export function ProductTable() {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Thumbnail</TableHead>
+              <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Cost Price</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Sales</TableHead>
-              <TableHead>Revenue</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading &&
+            {(queryLoading || isLoading) &&
               Array(ITEMS_PER_PAGE)
                 .fill(0)
                 .map((_, index) => (
                   <TableRow key={`skeleton-${index}`}>
-                    <TableCell colSpan={10} className="h-16 text-center">
+                    <TableCell colSpan={11} className="h-16 text-center">
                       Loading products...
                     </TableCell>
                   </TableRow>
                 ))}
-            {!isLoading && products.length === 0 && (
+            {!queryLoading && !isLoading && products.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
+                <TableCell colSpan={11} className="h-24 text-center">
                   No products found.
                 </TableCell>
               </TableRow>
             )}
-            {!isLoading &&
+            {!queryLoading &&
+              !isLoading &&
               products.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.id}</TableCell>
+                  <TableCell className="font-medium">#{product.id}</TableCell>
                   <TableCell>
-                    <Image
+                    {/* <Image
                       src={
-                        Array.isArray(product.images)
-                          ? product.images[0] ||
-                            "/placeholder.svg?height=40&width=40&query=product"
-                          : product.images ||
-                            "/placeholder.svg?height=40&width=40&query=product"
+                        `${process.env.NEXT_PUBLIC_API_URL}/${product.image}` || "/placeholder.svg?height=40&width=40"
                       }
                       alt={product.name}
                       width={40}
                       height={40}
                       className="rounded-md object-cover"
-                    />
+                    /> */}
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>{product.sales}</TableCell>
+                  <TableCell className="font-medium max-w-[200px] truncate">
+                    {product.name}
+                  </TableCell>
+                  <TableCell className="max-w-[250px] truncate text-gray-600">
+                    {product.description}
+                  </TableCell>
                   <TableCell>
-                    ${(product.revenue ?? 0).toLocaleString()}
+                    <Badge variant="outline">{product.category.name}</Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {formatPrice(product.price)}
+                  </TableCell>
+                  <TableCell className="text-gray-600">
+                    {formatPrice(product.cost_price)}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`font-medium ${
+                        product.stock_quantity < 10
+                          ? "text-red-600"
+                          : product.stock_quantity < 50
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {product.stock_quantity}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant={getStatusBadgeVariant(product.status)}
                       className={
-                        product.status === "Active"
+                        product.status === "active"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : product.status === "Low Stock"
+                          : product.status === "low_stock"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : product.status === "Out of Stock"
+                          : product.status === "out_of_stock"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : "bg-gray-100 text-gray-700 border-gray-200"
                       }
                     >
-                      {product.status}
+                      {getStatusDisplay(product.status)}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-gray-600">
+                    {formatDate(product.created_at)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -437,9 +534,10 @@ export function ProductTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                        // onClick={() => handleEditProduct(product)}
-                        >
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -456,24 +554,19 @@ export function ProductTable() {
           </TableBody>
         </Table>
 
-        {/* Enhanced Pagination */}
         {totalPages > 1 && (
           <EnhancedPagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalCount={totalCount}
             itemsPerPage={ITEMS_PER_PAGE}
-            isLoading={isLoading}
+            isLoading={queryLoading || isLoading}
             onPageChange={handlePageChange}
           />
         )}
       </div>
 
-      <AddProductSheet
-        isOpen={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        // productToEdit={productToEdit}
-      />
+      <AddProductSheet isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} />
     </div>
   );
 }

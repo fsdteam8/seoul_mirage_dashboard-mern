@@ -1,11 +1,12 @@
 export interface Category {
     id: string
+    imageUrl?: string // Optional image URL for the category
     name: string
     description?: string
     type: string
     productCount: number // Number of products associated with this category
-    createdAt: string // Should be Date in a real app
-    updatedAt: string // Should be Date in a real app
+    created_at: string // Should be Date in a real app
+    updated_at: string // Should be Date in a real app
   }
   
   const generateRandomDate = (start: Date, end: Date): string => {
@@ -20,8 +21,8 @@ export interface Category {
       description: "Concentrated formulas for targeted skin concerns.",
       productCount: 5,
       type: "essence",
-      createdAt: generateRandomDate(new Date(2023, 0, 1), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 6, 1), new Date()),
+      created_at: generateRandomDate(new Date(2023, 0, 1), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 6, 1), new Date()),
     },
     {
       id: "CAT002",
@@ -29,8 +30,8 @@ export interface Category {
       description: "Gentle and effective cleansers for all skin types.",
       productCount: 3,
       type: "essence",
-      createdAt: generateRandomDate(new Date(2023, 1, 1), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 7, 1), new Date()),
+      created_at: generateRandomDate(new Date(2023, 1, 1), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 7, 1), new Date()),
     },
     {
       id: "CAT003",
@@ -38,8 +39,8 @@ export interface Category {
       description: "Cosmetics for enhancing beauty.",
       productCount: 10,
       type: "essence",
-      createdAt: generateRandomDate(new Date(2023, 2, 1), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 8, 1), new Date()),
+      created_at: generateRandomDate(new Date(2023, 2, 1), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 8, 1), new Date()),
     },
     {
       id: "CAT004",
@@ -47,8 +48,8 @@ export interface Category {
       description: "Protection against harmful UV rays.",
       productCount: 4,
       type: "essence",
-      createdAt: generateRandomDate(new Date(2023, 3, 1), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 9, 1), new Date()),
+      created_at: generateRandomDate(new Date(2023, 3, 1), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 9, 1), new Date()),
     },
     {
       id: "CAT005",
@@ -56,8 +57,8 @@ export interface Category {
       type: "essence",
       description: "Intensive treatments for various skin needs.",
       productCount: 7,
-      createdAt: generateRandomDate(new Date(2023, 4, 1), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 10, 1), new Date()),
+      created_at: generateRandomDate(new Date(2023, 4, 1), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 10, 1), new Date()),
     },
     // Add more for pagination
     {
@@ -66,8 +67,8 @@ export interface Category {
       type: "grooming",
       description: "Specialized products for the delicate eye area.",
       productCount: 3,
-      createdAt: generateRandomDate(new Date(2023, 0, 15), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 6, 15), new Date()),
+      created_at: generateRandomDate(new Date(2023, 0, 15), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 6, 15), new Date()),
     },
     {
       id: "CAT007",
@@ -75,8 +76,8 @@ export interface Category {
       type: "treatment",
       description: "Nourishing and hydrating products for the body.",
       productCount: 6,
-      createdAt: generateRandomDate(new Date(2023, 1, 10), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 7, 10), new Date()),
+      created_at: generateRandomDate(new Date(2023, 1, 10), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 7, 10), new Date()),
     },
     {
       id: "CAT008",
@@ -84,8 +85,8 @@ export interface Category {
       type: "resurfacing",
       description: "Potent formulations with active ingredients.",
       productCount: 8,
-      createdAt: generateRandomDate(new Date(2023, 2, 5), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 8, 5), new Date()),
+      created_at: generateRandomDate(new Date(2023, 2, 5), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 8, 5), new Date()),
     },
     {
       id: "CAT009",
@@ -93,8 +94,8 @@ export interface Category {
       type: "face",
       description: "Balancing and prepping solutions for the skin.",
       productCount: 4,
-      createdAt: generateRandomDate(new Date(2023, 3, 20), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 9, 20), new Date()),
+      created_at: generateRandomDate(new Date(2023, 3, 20), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 9, 20), new Date()),
     },
     {
       id: "CAT010",
@@ -102,8 +103,8 @@ export interface Category {
       type: "deep",
       description: "Hydrating creams and lotions for daily use.",
       productCount: 9,
-      createdAt: generateRandomDate(new Date(2023, 4, 25), new Date()),
-      updatedAt: generateRandomDate(new Date(2023, 10, 25), new Date()),
+      created_at: generateRandomDate(new Date(2023, 4, 25), new Date()),
+      updated_at: generateRandomDate(new Date(2023, 10, 25), new Date()),
     },
   ]
   
