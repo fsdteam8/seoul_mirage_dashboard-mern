@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AddProductSheet } from "./add-product-sheet";
 import { StatCard } from "@/components/stat-card";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "./ui/skeleton";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -446,15 +447,39 @@ export function ProductTable() {
           </TableHeader>
           <TableBody>
             {(queryLoading || isLoading) &&
-              Array(ITEMS_PER_PAGE)
-                .fill(0)
-                .map((_, index) => (
-                  <TableRow key={`skeleton-${index}`}>
-                    <TableCell colSpan={11} className="h-16 text-center">
-                      Loading products...
-                    </TableCell>
-                  </TableRow>
-                ))}
+              <TableBody>
+      {Array(ITEMS_PER_PAGE)
+        .fill(0)
+        .map((_, index) => (
+          <TableRow key={`skeleton-${index}`}>
+            <TableCell>
+              <Skeleton className="h-4 w-10" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-10 w-10 rounded-md" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[120px]" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[200px]" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[80px]" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[60px]" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[60px]" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-[40px]" />
+            </TableCell>
+          </TableRow>
+        ))}
+    </TableBody>
+            }
             {!queryLoading && !isLoading && products.length === 0 && (
               <TableRow>
                 <TableCell colSpan={11} className="h-24 text-center">
