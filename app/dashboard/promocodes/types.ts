@@ -1,19 +1,20 @@
-export type DiscountType = "percentage" | "fixed";
+export type type = "percentage" | "fixed";
 export type PromoCodeStatus = "Active" | "Inactive" | "Expired" | "Fully Used";
 
 export interface PromoCode {
   id: string;
   name: string;
   description?: string;
-  discountType: DiscountType;
+  type: type;
   discountValue: number;
   minPurchaseAmount?: number;
   expiryDate?: string; // ISO string date YYYY-MM-DD
-  usageLimit?: number; // 0 or undefined for unlimited
+  usage_limit?: number; // 0 or undefined for unlimited
   timesUsed: number;
   isActive: boolean; // Admin can toggle this
   createdAt: string;
   updatedAt: string;
+  amount: number;
 }
 
 const generateRandomDate = (
@@ -40,16 +41,17 @@ const generateRandomCode = (length = 8): string => {
 export const mockPromoCodes: PromoCode[] = [
   {
     id: "PC001",
+    amount: 10,
     name: "SUMMER20",
     description: "20% off for summer sale",
-    discountType: "percentage",
+    type: "percentage",
     discountValue: 20,
     minPurchaseAmount: 50,
     expiryDate: generateRandomDate(
       new Date(),
       new Date(new Date().setDate(new Date().getDate() + 30))
     ),
-    usageLimit: 100,
+    usage_limit: 100,
     timesUsed: 25,
     isActive: true,
     createdAt: generateRandomDate(
@@ -61,12 +63,13 @@ export const mockPromoCodes: PromoCode[] = [
   },
   {
     id: "PC002",
+    amount: 0,
     name: "SAVE10NOW",
     description: "$10 off on first order",
-    discountType: "fixed",
+    type: "fixed",
     discountValue: 10,
     expiryDate: undefined, // No expiry
-    usageLimit: 1, // Single use per customer (logic not fully implemented in mock)
+    usage_limit: 1, // Single use per customer (logic not fully implemented in mock)
     timesUsed: 0,
     isActive: true,
     createdAt: generateRandomDate(
@@ -79,14 +82,15 @@ export const mockPromoCodes: PromoCode[] = [
   {
     id: "PC003",
     name: "EXPIREDCODE",
+    amount: 20,
     description: "An old expired code",
-    discountType: "percentage",
+    type: "percentage",
     discountValue: 15,
     expiryDate: generateRandomDate(
       new Date(new Date().setDate(new Date().getDate() - 60)),
       new Date(new Date().setDate(new Date().getDate() - 30))
     ), // Expired
-    usageLimit: 50,
+    usage_limit: 50,
     timesUsed: 40,
     isActive: true, // Still active but expiry date has passed
     createdAt: generateRandomDate(
@@ -98,11 +102,13 @@ export const mockPromoCodes: PromoCode[] = [
   },
   {
     id: "PC004",
+    amount: 40,
+
     name: "FULLYUSED",
     description: "A code that has reached its usage limit",
-    discountType: "fixed",
+    type: "fixed",
     discountValue: 5,
-    usageLimit: 10,
+    usage_limit: 10,
     timesUsed: 10,
     isActive: true,
     createdAt: generateRandomDate(
@@ -114,13 +120,14 @@ export const mockPromoCodes: PromoCode[] = [
   },
   {
     id: "PC005",
+    amount: 50,
     name: "INACTIVEPROMO",
     description: "A manually deactivated promo",
-    discountType: "percentage",
+    type: "percentage",
     discountValue: 25,
     isActive: false,
     timesUsed: 5,
-    usageLimit: 200,
+    usage_limit: 200,
     createdAt: generateRandomDate(
       new Date(2023, 0, 1),
       new Date(2023, 5, 1),
@@ -132,9 +139,10 @@ export const mockPromoCodes: PromoCode[] = [
   ...Array.from({ length: 10 }, (_, i) => ({
     id: `PC${String(100 + i).padStart(3, "0")}`,
     name: generateRandomCode(),
+    amount: 60,
     description: `Random promo code ${i + 1}`,
-    discountType:
-      i % 2 === 0 ? ("percentage" as DiscountType) : ("fixed" as DiscountType),
+    type:
+      i % 2 === 0 ? ("percentage" as type) : ("fixed" as type),
     discountValue:
       i % 2 === 0
         ? Math.floor(Math.random() * 20) + 5
@@ -166,7 +174,7 @@ export const promoCodeStatuses: PromoCodeStatus[] = [
   "Expired",
   "Fully Used",
 ];
-export const discountTypes: DiscountType[] = ["percentage", "fixed"];
+export const types: type[] = ["percentage", "fixed"];
 
 // Helper to determine the actual status based on isActive, expiryDate, and usage
 export const getEffectivePromoCodeStatus = (
@@ -175,7 +183,7 @@ export const getEffectivePromoCodeStatus = (
   if (!promo.isActive) return "Inactive";
   if (promo.expiryDate && new Date(promo.expiryDate) < new Date())
     return "Expired";
-  if (promo.usageLimit && promo.timesUsed >= promo.usageLimit)
+  if (promo.usage_limit && promo.timesUsed >= promo.usage_limit)
     return "Fully Used";
   return "Active";
 };
