@@ -88,7 +88,7 @@ export default function Page() {
                 className="w-full bg-transparent border-2 border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-800/50"
               >
                 <Link
-                  href="/"
+                  href="/login"
                   className="flex items-center justify-center gap-3"
                 >
                   <Home className="w-5 h-5" />
@@ -99,7 +99,7 @@ export default function Page() {
                 onClick={() => signOut()}
                 asChild
                 variant="outline"
-                className="w-full bg-transparent border-2 border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-800/50"
+                className="w-full cursor-pointer bg-transparent border-2 border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-800/50"
               >
                 <div
                   className="flex items-center justify-center gap-3"

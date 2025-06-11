@@ -48,8 +48,12 @@ export async function addProductAction(
     id: newId,
     sales: 0, // New products start with 0 sales
     revenue: 0, // New products start with 0 revenue
-    thumbnailUrl:
-      productData.thumbnailUrl || `/placeholder.svg?height=40&width=40&query=${encodeURIComponent(productData.name)}`, // Default placeholder
+    images:
+      Array.isArray(productData.images)
+        ? productData.images
+        : productData.images
+        ? [productData.images]
+        : [`/placeholder.svg?height=40&width=40&query=${encodeURIComponent(productData.name)}`], // Default placeholder
   }
   productsStore.unshift(newProduct) // Add to the beginning
   revalidatePath("/dashboard/products")
