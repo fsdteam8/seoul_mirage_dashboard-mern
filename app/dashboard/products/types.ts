@@ -1,25 +1,29 @@
-export type ProductStatus = "Active" | "Out of Stock" | "Low Stock" | "Archived"
+export type ProductStatus =
+  | "Active"
+  | "Out of Stock"
+  | "Low Stock"
+  | "Archived";
 
 export interface Product {
-  id: string
-  thumbnailUrl: string
-  name: string
-  category: string
-  price: number
-  costPrice?: number // Added from form
-  stock: number
-  sales: number
-  revenue: number
-  status: ProductStatus
-  description?: string // Added from form
-  tags?: string[] // Added from form
-  vendor?: string // Added from form
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  costPrice?: number;
+  stock: number;
+  description?: string;
+  tags?: string[];
+  vendor?: string;
+  status: ProductStatus;
+  sales?: number;
+  revenue?: number;
+  // images can be a single string or an array of strings
+  images?: string[]; // <-- add this
 }
-
 export const mockProducts: Product[] = [
   {
     id: "SM001",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Hydrating Essence",
     category: "Essences",
     price: 65,
@@ -33,7 +37,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM002",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Gentle Cleanser",
     category: "Cleansers",
     price: 50,
@@ -41,13 +45,14 @@ export const mockProducts: Product[] = [
     sales: 450,
     revenue: 22500,
     status: "Out of Stock",
-    description: "A gentle cleanser that removes impurities without stripping moisture.",
+    description:
+      "A gentle cleanser that removes impurities without stripping moisture.",
     tags: ["cleansing", "gentle"],
     vendor: "Mirage Beauty",
   },
   {
     id: "SM003",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Velvet Lipstick",
     category: "Makeup",
     price: 30,
@@ -61,7 +66,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM004",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Daily Sunscreen SPF50",
     category: "Suncare",
     price: 45,
@@ -72,7 +77,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM005",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Brightening Sheet Mask",
     category: "Masks",
     price: 15,
@@ -84,7 +89,7 @@ export const mockProducts: Product[] = [
   // Add more products to test pagination
   {
     id: "SM006",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Revitalizing Eye Cream",
     category: "Eye Care",
     price: 55,
@@ -95,7 +100,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM007",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Nourishing Body Lotion",
     category: "Body Care",
     price: 40,
@@ -106,7 +111,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM008",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Vitamin C Serum",
     category: "Serums",
     price: 70,
@@ -117,7 +122,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM009",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Balancing Toner",
     category: "Toners",
     price: 35,
@@ -128,7 +133,7 @@ export const mockProducts: Product[] = [
   },
   {
     id: "SM010",
-    thumbnailUrl: "/images/dashboardlistImage.png",
+    images: ["/images/dashboardlistImage.png"],
     name: "Repairing Night Cream",
     category: "Moisturizers",
     price: 75,
@@ -137,7 +142,7 @@ export const mockProducts: Product[] = [
     revenue: 6750,
     status: "Active",
   },
-]
+];
 
 export const productCategories = [
   "Essences",
@@ -150,8 +155,13 @@ export const productCategories = [
   "Serums",
   "Toners",
   "Moisturizers",
-]
-export const productStatuses: ProductStatus[] = ["Active", "Low Stock", "Out of Stock", "Archived"]
+];
+export const productStatuses: ProductStatus[] = [
+  "Active",
+  "Low Stock",
+  "Out of Stock",
+  "Archived",
+];
 export const productTags = [
   "hydrating",
   "skincare",
@@ -163,4 +173,4 @@ export const productTags = [
   "brightening",
   "anti-aging",
   "vegan",
-]
+];

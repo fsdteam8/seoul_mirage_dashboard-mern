@@ -14,7 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Settings, LogOut } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -23,14 +23,16 @@ interface HeaderProps {
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const session = useSession();
+  const token = session?.data?.user ?? {};
+  console.log(token);
 
   const handleLogout = () => {
-    signOut();
+    signOut({ callbackUrl: "/login" });
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
-    router.push("/login");
   };
 
   return (
@@ -70,9 +72,11 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 </Button>
               </div>
               <div className="flex flex-col space-y-1">
-                <p className="text-[16px] text-[#000000] font-medium leading-[120%]">Name</p>
+                <p className="text-[16px] text-[#000000] font-medium leading-[120%]">
+                  {"name" in token && token.name ? token.name : "Admin Name"}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                 Admin
+                  {"email" in token && token.email ? token.email : "admin@example.com"}
                 </p>
               </div>
             </div>
@@ -80,9 +84,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Admin Name</p>
+                <p className="text-sm font-medium leading-none">  {"name" in token && token.name ? token.name : "Admin Name"}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  admin@example.com
+                  {"email" in token && token.email ? token.email : "admin@example.com"}
                 </p>
               </div>
             </DropdownMenuLabel>

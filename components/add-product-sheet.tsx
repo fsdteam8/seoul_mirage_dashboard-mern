@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,36 +26,48 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import {
-  addProductAction,
-  updateProductAction,
-} from "@/app/dashboard/products/actions";
-import {
-  type Product,
-  type ProductStatus,
-  productCategories,
-  productStatuses,
-  productTags,
-} from "@/app/dashboard/products/types";
-import { UploadCloud, X } from "lucide-react";
+import { UploadCloud, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { useMutation } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
+// Define types to avoid import errors
+type ProductStatus = "active" | "inactive" | "draft";
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  costPrice?: number;
+  stock: number;
+  description?: string;
+  tags?: string[];
+  vendor?: string;
+  images?: string[];
+  status: ProductStatus;
+}
+
+// Mock data - replace with your actual imports
+const productCategories = [
+  "Electronics",
+  "Clothing",
+  "Books",
+  "Home & Garden",
+  "Sports",
+];
+
+// Updated schema to match backend structure
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
-  category: z.string().min(1, "Category is required"),
+  category_id: z.string().min(1, "Category is required"),
   price: z.coerce.number().positive("Price must be a positive number"),
-  costPrice: z.coerce.number().optional(),
-  stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
+  cost_price: z.coerce.number().optional(),
+  stock_quantity: z.coerce.number().int().min(0, "Stock cannot be negative"),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   vendor: z.string().optional(),
-  thumbnailUrl: z.string().optional(), // For simplicity, we'll just use a string URL. Real upload is complex.
-  status: z.custom<ProductStatus>(
-    (val) => productStatuses.includes(val as ProductStatus),
-    {
-      message: "Invalid status",
-    }
-  ),
+  status: z.enum(["active", "inactive", "draft"]),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -74,130 +85,345 @@ export function AddProductSheet({
 }: AddProductSheetProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-    productToEdit?.thumbnailUrl || null
-  );
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const session = useSession();
+  const token = session?.data?.accessToken ?? {};
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: productToEdit
-      ? {
-          name: productToEdit.name,
-          category: productToEdit.category,
-          price: productToEdit.price,
-          costPrice: productToEdit.costPrice,
-          stock: productToEdit.stock,
-          description: productToEdit.description || "",
-          tags: productToEdit.tags || [],
-          vendor: productToEdit.vendor || "",
-          thumbnailUrl: productToEdit.thumbnailUrl || "",
-          status: productToEdit.status,
-        }
-      : {
-          name: "",
-          category: "",
-          price: 0,
-          stock: 0,
-          description: "",
-          tags: [],
-          vendor: "",
-          thumbnailUrl: "",
-          status: "Active",
-        },
+    defaultValues: {
+      name: "",
+      category_id: "",
+      price: 0,
+      stock_quantity: 0,
+      description: "",
+      tags: [],
+      vendor: "",
+      status: "active",
+    },
   });
 
   // Reset form when productToEdit changes or sheet closes
   React.useEffect(() => {
     if (isOpen) {
       if (productToEdit) {
-        form.reset({
-          name: productToEdit.name,
-          category: productToEdit.category,
-          price: productToEdit.price,
-          costPrice: productToEdit.costPrice,
-          stock: productToEdit.stock,
+        const defaultValues = {
+          name: productToEdit.name || "",
+          category_id: "1", // Default category ID based on your mock 'productCategories'
+          price: productToEdit.price || 0,
+          cost_price: productToEdit.costPrice,
+          stock_quantity: productToEdit.stock || 0,
           description: productToEdit.description || "",
           tags: productToEdit.tags || [],
           vendor: productToEdit.vendor || "",
-          thumbnailUrl: productToEdit.thumbnailUrl || "",
-          status: productToEdit.status,
-        });
-        setThumbnailPreview(productToEdit.thumbnailUrl || null);
+          status: (productToEdit.status || "active") as ProductStatus,
+        };
+        form.reset(defaultValues);
+        setImagePreviews(productToEdit.images || []);
+        setSelectedFiles([]);
       } else {
-        form.reset({
+        const defaultValues = {
           name: "",
-          category: "",
+          category_id: "",
           price: 0,
-          stock: 0,
+          stock_quantity: 0,
           description: "",
           tags: [],
           vendor: "",
-          thumbnailUrl: "",
-          status: "Active",
-          costPrice: undefined,
-        });
-        setThumbnailPreview(null);
+          status: "active" as ProductStatus,
+          cost_price: undefined,
+        };
+        form.reset(defaultValues);
+        setImagePreviews([]);
+        setSelectedFiles([]);
+
+        console.log("=== NEW PRODUCT FORM INITIALIZED ===");
+        console.log("Default Values:", defaultValues);
       }
     }
   }, [isOpen, productToEdit, form]);
 
-  const onSubmit = async (data: ProductFormValues) => {
-    setIsSubmitting(true);
-    try {
-      let result;
-      if (productToEdit) {
-        result = await updateProductAction(productToEdit.id, {
-          ...data,
-          thumbnailUrl: thumbnailPreview || data.thumbnailUrl,
-        });
-      } else {
-        result = await addProductAction({
-          ...data,
-          thumbnailUrl: thumbnailPreview || data.thumbnailUrl || "",
-        });
-      }
+  const mutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      try {
+        // const token = localStorage.getItem("token");
 
-      if (result.success) {
-        toast({
-          title: productToEdit ? "Product Updated" : "Product Added",
-          description: result.message,
+        console.log("=== SENDING FORMDATA TO BACKEND ===");
+        console.log("API Endpoint: /api/products");
+        console.log("Method: POST");
+        console.log("Authorization: Bearer", token ? "***" : "No token");
+
+        // Log all FormData entries
+        console.log("=== FORMDATA CONTENTS ===");
+        const entries = Array.from(formData.entries());
+
+        // Group images together for better logging
+        const imageEntries = entries.filter(([key]) => key === "images");
+        const otherEntries = entries.filter(([key]) => key !== "images");
+
+        // Log non-image fields
+        otherEntries.forEach(([key, value]) => {
+          console.log(`${key}:`, value);
         });
-        onOpenChange(false); // Close sheet on success
-        form.reset();
-        setThumbnailPreview(null);
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
+
+        // Log image files
+        console.log(`images: ${imageEntries.length} files`);
+        imageEntries.forEach(([key, value], index) => {
+          console.log(key);
+          if (value instanceof File) {
+            console.log(`  images[${index}]:`, {
+              name: value.name,
+              size: `${(value.size / 1024).toFixed(2)} KB`,
+              type: value.type,
+              lastModified: new Date(value.lastModified).toISOString(),
+            });
+          }
         });
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "multipart/form-data",
+              ...(token && { Authorization: `Bearer ${token}` }),
+              // Don't set Content-Type - let browser set it for FormData
+            },
+            body: formData,
+          }
+        );
+
+        console.log("=== API RESPONSE ===");
+        console.log("Status:", res.status);
+        console.log("Status Text:", res.statusText);
+
+        if (!res.ok) {
+          let errorMessage = "Failed to create product";
+          try {
+            const error = await res.json();
+            errorMessage = error.message || errorMessage;
+            console.error("API Error Response:", error);
+          } catch (e) {
+            console.error("Failed to parse error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+
+        const result = await res.json();
+        console.log("API Success Response:", result);
+        return result;
+      } catch (error) {
+        console.error("Mutation error:", error);
+        throw error;
       }
-    } catch {
+    },
+
+    onSuccess: (data) => {
+      console.log("=== PRODUCT CREATION SUCCESS ===");
+      console.log("Created Product:", data);
+
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Product Created",
+        description: "The product has been created successfully.",
+        variant: "default",
+      });
+
+      setIsSubmitting(false);
+      onOpenChange(false);
+      form.reset();
+      setSelectedFiles([]);
+      setImagePreviews([]);
+
+      console.log("Form reset and modal closed");
+    },
+
+    onError: (error: Error) => {
+      console.error("=== PRODUCT CREATION ERROR ===");
+      console.error("Error:", error.message);
+      console.error("Full Error:", error);
+
+      toast({
+        title: "Error Creating Product",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
-    } finally {
+
+      setIsSubmitting(false);
+    },
+  });
+
+  const onSubmit = async (data: ProductFormValues) => {
+    try {
+      setIsSubmitting(true);
+
+      console.log("=== FORM SUBMISSION STARTED ===");
+      console.log("Form Data:", data);
+      console.log("Selected Files Count:", selectedFiles.length);
+
+      // Create FormData object
+      const formData = new FormData();
+
+      // Add all form fields as strings
+      formData.append("name", data.name);
+      formData.append("description", data.description || "");
+      formData.append("category_id", data.category_id);
+      formData.append("price", data.price.toString());
+      formData.append("status", data.status);
+      formData.append("cost_price", data.cost_price?.toString() || "");
+      formData.append("stock_quantity", data.stock_quantity.toString());
+
+      // Add optional fields
+      if (data.vendor) {
+        formData.append("vendor", data.vendor);
+      }
+
+      // Add tags as JSON string
+      if (data.tags && data.tags.length > 0) {
+        formData.append("tags", JSON.stringify(data.tags));
+        console.log("Tags added:", data.tags);
+      }
+
+      // Add ALL images under the same "images" key
+      if (selectedFiles.length > 0) {
+        console.log("=== ADDING IMAGES TO FORMDATA ===");
+        selectedFiles.forEach((file, index) => {
+          formData.append(`images[${index}]`, file);
+          console.log(`Added images[${index}]:`, {
+            name: file.name,
+            size: `${(file.size / 1024).toFixed(2)} KB`,
+            type: file.type,
+          });
+        });
+        console.log(`Total images added: ${selectedFiles.length}`);
+      }
+
+      console.log("=== FORMDATA PREPARATION COMPLETE ===");
+      console.log(
+        "Total FormData entries:",
+        Array.from(formData.entries()).length
+      );
+
+      // Submit the FormData
+      await mutation.mutateAsync(formData);
+    } catch (error) {
+      console.error("Submit error:", error);
       setIsSubmitting(false);
     }
   };
 
-  // Simulate file upload by setting a placeholder URL
-  const handleThumbnailChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string);
-        // In a real app, you would upload the file and get a URL
-        // form.setValue("thumbnailUrl", "simulated_url_after_upload.jpg");
-      };
-      reader.readAsDataURL(file);
+  // Handle multiple image uploads
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    console.log("=== NEW FILES SELECTED ===");
+    console.log("Number of files:", files.length);
+
+    const newFiles = Array.from(files);
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    newFiles.forEach((file, index) => {
+      console.log(`File ${index + 1}:`, {
+        name: file.name,
+        size: `${(file.size / 1024).toFixed(2)} KB`,
+        type: file.type,
+      });
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        console.warn(`File ${file.name} is not an image, skipping`);
+        toast({
+          title: "Invalid File Type",
+          description: `${file.name} is not an image file`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        console.warn(`File ${file.name} is too large`);
+        toast({
+          title: "File Too Large",
+          description: `${file.name} is larger than 10MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      validFiles.push(file);
+      const previewUrl = URL.createObjectURL(file);
+      newPreviews.push(previewUrl);
+    });
+
+    // Update state
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    // Reset input
+    event.target.value = "";
+
+    if (validFiles.length > 0) {
+      toast({
+        title: "Images Added",
+        description: `${validFiles.length} image${
+          validFiles.length !== 1 ? "s" : ""
+        } added successfully`,
+      });
     }
   };
+
+  // Remove specific image
+  const removeImage = (indexToRemove: number) => {
+    console.log("Removing image at index:", indexToRemove);
+
+    const previewToRemove = imagePreviews[indexToRemove];
+    if (previewToRemove?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewToRemove);
+    }
+
+    setImagePreviews((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+    setSelectedFiles((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+
+    toast({
+      title: "Image Removed",
+      description: "Image has been removed from the selection",
+    });
+  };
+
+  // Clear all images
+  const clearAllImages = () => {
+    imagePreviews.forEach((preview) => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+
+    setImagePreviews([]);
+    setSelectedFiles([]);
+
+    toast({
+      title: "All Images Cleared",
+      description: "All images have been removed",
+    });
+  };
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => {
+        if (preview.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
+    };
+  }, [imagePreviews]);
 
   return (
     <Sheet
@@ -205,8 +431,9 @@ export function AddProductSheet({
       onOpenChange={(open) => {
         onOpenChange(open);
         if (!open) {
-          form.reset(); // Reset form when closing
-          setThumbnailPreview(null);
+          form.reset();
+          clearAllImages();
+          setIsSubmitting(false);
         }
       }}
     >
@@ -238,23 +465,18 @@ export function AddProductSheet({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category_id">Category</Label>
               <Controller
-                name="category"
+                name="category_id"
                 control={form.control}
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="h-11">
-                      {" "}
-                      {/* h-11 = 44px */}
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {productCategories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
+                      {productCategories.map((cat, index) => (
+                        <SelectItem key={cat} value={(index + 1).toString()}>
                           {cat}
                         </SelectItem>
                       ))}
@@ -262,9 +484,9 @@ export function AddProductSheet({
                   </Select>
                 )}
               />
-              {form.formState.errors.category && (
+              {form.formState.errors.category_id && (
                 <p className="text-xs text-red-500 mt-1">
-                  {form.formState.errors.category.message}
+                  {form.formState.errors.category_id.message}
                 </p>
               )}
             </div>
@@ -275,19 +497,14 @@ export function AddProductSheet({
                 name="status"
                 control={form.control}
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {productStatuses.map((stat) => (
-                        <SelectItem key={stat} value={stat}>
-                          {stat}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -302,7 +519,7 @@ export function AddProductSheet({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
                 type="number"
@@ -317,28 +534,28 @@ export function AddProductSheet({
               )}
             </div>
             <div>
-              <Label htmlFor="costPrice">Cost Price ($) (Optional)</Label>
+              <Label htmlFor="cost_price">Cost Price</Label>
               <Input
-                id="costPrice"
+                id="cost_price"
                 type="number"
                 className="mt-2 h-[44px]"
                 step="0.01"
-                {...form.register("costPrice")}
+                {...form.register("cost_price")}
               />
-              {form.formState.errors.costPrice && (
-                <p className="text-xs text-red-500 mt-1">
-                  {form.formState.errors.costPrice.message}
-                </p>
-              )}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="stock">Stock Quantity</Label>
-            <Input className="mt-2 h-[44px]" id="stock" type="number" {...form.register("stock")} />
-            {form.formState.errors.stock && (
+            <Label htmlFor="stock_quantity">Stock Quantity</Label>
+            <Input
+              className="mt-2 h-[44px]"
+              id="stock_quantity"
+              type="number"
+              {...form.register("stock_quantity")}
+            />
+            {form.formState.errors.stock_quantity && (
               <p className="text-xs text-red-500 mt-1">
-                {form.formState.errors.stock.message}
+                {form.formState.errors.stock_quantity.message}
               </p>
             )}
           </div>
@@ -354,113 +571,97 @@ export function AddProductSheet({
           </div>
 
           <div>
-            <Label htmlFor="tags">Tags (Optional)</Label>
-            <Controller
-              name="tags"
-              control={form.control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={(value) =>
-                    field.onChange(value ? value.split(",") : [])
-                  }
-                  value={field.value?.join(",") || ""}
-                >
-                  <SelectTrigger className="h-11 mt-2">
-                    <SelectValue placeholder="Select tags (multi-select not directly supported, use CSV or custom component)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Basic multi-select simulation. For real multi-select, use a custom component or library */}
-                    <p className="p-2 text-xs text-muted-foreground">
-                      Tip: For multiple, select one, then re-open to add more
-                      (not ideal).
-                    </p>
-                    {productTags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
-                        {tag}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+            <Label htmlFor="vendor">Vendor</Label>
+            <Input
+              className="mt-2 h-[44px]"
+              id="vendor"
+              {...form.register("vendor")}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              For multiple tags, you might need a more advanced multi-select
-              component. This is a basic version.
-            </p>
           </div>
 
+          {/* Images Section */}
           <div>
-            <Label htmlFor="vendor">Vendor (Optional)</Label>
-            <Input className="mt-2 h-[44px]" id="vendor" {...form.register("vendor")} />
-          </div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Product Images
+              </Label>
+              {imagePreviews.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllImages}
+                >
+                  Clear All ({imagePreviews.length})
+                </Button>
+              )}
+            </div>
 
-          <div>
-            <Label htmlFor="thumbnail">Thumbnail</Label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-              <div className="space-y-1 text-center">
-                {thumbnailPreview ? (
-                  <div className="relative mx-auto h-24 w-24">
-                    <Image
-                      src={thumbnailPreview || "/placeholder.svg"}
-                      alt="Thumbnail preview"
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded-md"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -top-2 -right-2 bg-white rounded-full h-6 w-6 p-1"
-                      onClick={() => setThumbnailPreview(null)}
-                    >
-                      <X className="h-4 w-4 text-red-500" />
-                    </Button>
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <div className="aspect-square relative overflow-hidden rounded-md border">
+                      <Image
+                        src={preview || "/placeholder.svg"}
+                        alt={`Product image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs">
+                        {index + 1}
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                )}
-                <div className="flex text-sm text-gray-600">
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-brand-pink hover:text-brand-pink/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-pink"
-                  >
-                    <span>Upload a file</span>
-                    <input
-                      id="thumbnail-upload"
-                      name="thumbnail-upload"
-                      type="file"
-                      className="sr-only"
-                      accept="image/*"
-                      onChange={handleThumbnailChange}
-                    />
-                  </label>
-                  <p className="pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF up to 10MB
-                </p>
+                ))}
               </div>
+            )}
+
+            <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center hover:border-gray-400 transition-colors">
+              <UploadCloud className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <label htmlFor="images-upload" className="cursor-pointer">
+                <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                  Upload images
+                </span>
+                <input
+                  id="images-upload"
+                  type="file"
+                  className="sr-only"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                />
+              </label>
+              <p className="text-xs text-gray-500 mt-2">
+                PNG, JPG, GIF up to 10MB each
+              </p>
+              {imagePreviews.length > 0 && (
+                <p className="text-xs font-medium text-green-600 mt-2">
+                  {imagePreviews.length} image
+                  {imagePreviews.length !== 1 ? "s" : ""} selected
+                </p>
+              )}
             </div>
           </div>
 
-          <SheetFooter className="pt-4 ">
+          <SheetFooter className="pt-4">
             <SheetClose asChild>
-              <Button className="rounded-full w-[117px] h-[51px] border border-[#000000]" type="button" variant="outline">
+              <Button type="button" variant="outline" disabled={isSubmitting}>
                 Cancel
               </Button>
             </SheetClose>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-[51px] w-[101px] rounded-full border border-[#000000]"
-            >
-              {isSubmitting
-                ? productToEdit
-                  ? "Saving..."
-                  : "Adding..."
-                : productToEdit
-                ? "Save Changes"
-                : "Save"}
+            <Button type="submit" disabled={isSubmitting || mutation.isPending}>
+              {isSubmitting || mutation.isPending ? "Saving..." : "Save"}
             </Button>
           </SheetFooter>
         </form>

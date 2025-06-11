@@ -55,13 +55,11 @@ export default function LoginPage() {
         return;
       }
 
-      if (res?.ok) {
-        toast({
-          title: "Login Successful",
-          description: "You have successfully logged in.",
-          variant: "default",
-        });
-      }
+      toast({
+        title: "Login Successful",
+        description: "You have successfully logged in.",
+        variant: "default",
+      });
       router.push("/dashboard");
     } catch {
       toast({

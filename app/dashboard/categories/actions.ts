@@ -42,8 +42,8 @@ export async function addCategoryAction(
     ...categoryData,
     id: newId,
     productCount: 0, // New categories start with 0 products
-    createdAt: currentDate,
-    updatedAt: currentDate,
+    created_at: currentDate,
+    updated_at: currentDate,
   }
   categoriesStore.unshift(newCategory)
   revalidatePath("/dashboard/categories")
@@ -64,7 +64,7 @@ export async function updateCategoryAction(
   categoriesStore[categoryIndex] = {
     ...categoriesStore[categoryIndex],
     ...categoryData,
-    updatedAt: currentDate,
+     updated_at: currentDate,
   }
   revalidatePath("/dashboard/categories")
   revalidatePath("/dashboard/products") // If product form uses categories
