@@ -189,7 +189,7 @@ export function PromoCodeTable() {
   );
 
   const { data } = useQuery({
-    queryKey: ["categories", currentPage, searchTerm],
+    queryKey: ["promocodes", currentPage, searchTerm],
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
