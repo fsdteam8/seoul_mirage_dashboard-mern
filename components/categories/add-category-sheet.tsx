@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,6 +61,7 @@ export function AddCategorySheet({
   categoryToEdit,
 }: AddCategorySheetProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -123,6 +124,7 @@ export function AddCategorySheet({
         description: data.message,
       });
       onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       form.reset();
     },
     onError: (error) => {

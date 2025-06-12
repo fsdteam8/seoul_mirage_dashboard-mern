@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Product } from "@/types/ProductDataType";
 
@@ -76,7 +76,7 @@ export function AddProductSheet({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
-
+  const queryClient = useQueryClient();
   const {
     data: category,
     error: categoryError,
@@ -218,14 +218,12 @@ export function AddProductSheet({
         }
 
         const result = await res.json();
-        console.log("API Success Response:", result);
         return result;
       } catch (error) {
         console.error("Mutation error:", error);
         throw error;
       }
     },
-
     onSuccess: (data) => {
       console.log(data);
       toast({
@@ -233,7 +231,7 @@ export function AddProductSheet({
         description: "The product has been created successfully.",
         variant: "default",
       });
-
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsSubmitting(false);
       onOpenChange(false);
       form.reset();

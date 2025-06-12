@@ -48,6 +48,7 @@ import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Product, ProductApiResponse } from "@/types/ProductDataType";
+import AlertModal from "./ui/alert-modal";
 
 // Enhanced Pagination Component
 interface PaginationProps {
@@ -150,6 +151,7 @@ function EnhancedPagination({
 }
 
 export function ProductTable() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,6 +161,9 @@ export function ProductTable() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const session = useSession();
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(
+    null
+  );
   const token = session?.data?.accessToken ?? {};
   // Fetch products from your API
   const {
@@ -193,9 +198,8 @@ export function ProductTable() {
     },
   });
 
-  console.log(data?.current_page);
-
   const products: Product[] = data?.data?.data || [];
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
@@ -252,8 +256,17 @@ export function ProductTable() {
     },
   });
 
-  const handleDeleteProduct = async (productId: number) => {
-    mutationDelete.mutate(productId);
+  const handleDeleteClick = (productId: string) => {
+    setProductIdToDelete(productId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (productIdToDelete) {
+      mutationDelete.mutate(Number(productIdToDelete));
+      setProductIdToDelete(null);
+      setIsModalOpen(false);
+    }
   };
 
   const handleProduct = () => {
@@ -549,9 +562,7 @@ export function ProductTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            handleDeleteProduct(Number(product.id))
-                          }
+                          onClick={() => handleDeleteClick(String(product.id))}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -575,6 +586,15 @@ export function ProductTable() {
           />
         )}
       </div>
+
+      <AlertModal
+        title="Are you sure you want to delete this Product?"
+        message="This action cannot be undone."
+        loading={mutationDelete.isPending}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       <AddProductSheet
         productToEdit={productToEdit}
