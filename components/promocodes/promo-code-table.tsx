@@ -58,6 +58,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AddPromoCodeSheet } from "./add-promo-code-sheet";
 import { StatCard } from "@/components/stat-card";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -187,6 +188,27 @@ export function PromoCodeTable() {
     null
   );
 
+  const { data } = useQuery({
+    queryKey: ["promocodes", currentPage, searchTerm],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch blogs");
+      }
+      return res.json();
+    },
+  });
+
+  const promoCode = data?.data?.data || [];
+
   const fetchPromoCodesData = () => {
     startTransition(async () => {
       const data = await getPromoCodes(
@@ -195,7 +217,7 @@ export function PromoCodeTable() {
         searchTerm,
         statusFilter
       );
-      setPromoCodes(data.promoCodes);
+      setPromoCodes(promoCode);
       setTotalPages(data.totalPages);
       setTotalCount(data.totalCount);
     });
@@ -286,11 +308,10 @@ export function PromoCodeTable() {
     (pc) => getEffectivePromoCodeStatus(pc) === "Active"
   ).length;
   const totalRedeemedValue = promoCodes.reduce((sum, pc) => {
-    if (pc.discountType === "fixed")
-      return sum + pc.timesUsed * pc.discountValue;
+    if (pc.type === "fixed") return sum + pc.timesUsed * pc.discountValue;
     // For percentage, this is harder to calculate without knowing order values.
     // Let's simulate an average order value of $50 for percentage discounts.
-    if (pc.discountType === "percentage")
+    if (pc.type === "percentage")
       return sum + pc.timesUsed * (50 * (pc.discountValue / 100));
     return sum;
   }, 0);
@@ -361,7 +382,7 @@ export function PromoCodeTable() {
             <TableRow>
               <TableHead>Code</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Discount</TableHead>
+              {/* <TableHead>Discount</TableHead> */}
               <TableHead>Usage</TableHead>
               <TableHead>Min. Purchase</TableHead>
               <TableHead>Expires</TableHead>
@@ -408,19 +429,13 @@ export function PromoCodeTable() {
                     <TableCell className="text-xs text-gray-600 max-w-[200px] truncate">
                       {pc.description || "-"}
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       {pc.discountType === "percentage"
                         ? `${pc.discountValue}% `
                         : `$${pc.discountValue.toFixed(2)}`}
-                    </TableCell>
-                    <TableCell>
-                      {pc.timesUsed} / {pc.usageLimit ? pc.usageLimit : "∞"}
-                    </TableCell>
-                    <TableCell>
-                      {pc.minPurchaseAmount
-                        ? `$${pc.minPurchaseAmount.toFixed(2)}`
-                        : "-"}
-                    </TableCell>
+                    </TableCell> */}
+                    <TableCell>{pc.usage_limit}</TableCell>
+                    <TableCell>{pc.amount}</TableCell>
                     <TableCell>
                       {pc.expiryDate
                         ? format(new Date(pc.expiryDate), "MMM dd, yyyy")
