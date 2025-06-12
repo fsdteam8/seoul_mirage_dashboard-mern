@@ -45,10 +45,9 @@ export default function LoginPage() {
         password: data.password,
         redirect: false,
       });
-
       if (!res?.ok) {
         toast({
-          title: "Login Failed",
+          title: (res && res.error) || "Login Failed",
           description: res?.error || "An error occurred during login.",
           variant: "destructive",
         });

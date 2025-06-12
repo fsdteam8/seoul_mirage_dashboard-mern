@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Category } from "@/app/dashboard/categories/types";
+// import type { Category } from "@/app/dashboard/categories/types";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { Category } from "@/types/CategoryDataType";
 
 // Zod schema (no need for image validation now)
 const categorySchema = z.object({
@@ -82,8 +83,6 @@ export function AddCategorySheet({
       }
     }
   }, [isOpen, categoryToEdit, form]);
-
-  console.log(categoryToEdit);
 
   const categoryMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {

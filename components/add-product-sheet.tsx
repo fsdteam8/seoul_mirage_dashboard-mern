@@ -30,28 +30,10 @@ import { UploadCloud, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { Product } from "@/types/ProductDataType";
 
 // Define types to avoid import errors
 type ProductStatus = "active" | "inactive" | "draft";
-
-interface Product {
-  id: string | number; // Assuming ID can be string or number
-  name: string;
-  description: string;
-  image: string;
-  price: string;
-  category_id: number;
-  status: "active" | "inactive" | "low_stock" | "out_of_stock";
-  cost_price: string;
-  stock_quantity: number;
-  created_at: string;
-  updated_at: string;
-  media: unknown[]; // Replace 'unknown' with a specific Media type if available
-  category: {
-    id: string | number; // Assuming category ID can be string or number
-    name: string;
-  };
-}
 
 // Mock data - replace with your actual imports
 // const productCategories = [

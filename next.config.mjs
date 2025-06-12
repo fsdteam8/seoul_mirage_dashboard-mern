@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
      images: {
-    domains: ['images/products/iphone14.jpg','images/products/iphone14.jpg'], // replace with actual domain
+    domains: ['saul-mirage.scaleupdevagency.com'], // replace with actual domain
   },
 };
 

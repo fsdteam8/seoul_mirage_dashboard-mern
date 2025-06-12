@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -30,14 +30,15 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { Category } from "@/app/dashboard/categories/types";
-import { getCategories } from "@/app/dashboard/categories/actions";
+// import type { Category } from "@/app/dashboard/categories/types";
+// import { getCategories } from "@/app/dashboard/categories/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AddCategorySheet } from "./add-category-sheet";
 import { StatCard } from "@/components/stat-card";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "../ui/skeleton";
 import { useSession } from "next-auth/react";
+import { Category, PaginatedCategoryResponse } from "@/types/CategoryDataType";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -151,12 +152,11 @@ function EnhancedPagination({
 }
 
 export function CategoryTable() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  // const [, setTotalPages] = useState(1);
+  const [totalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, startTransition] = useTransition();
+  // const [isLoading] = useTransition();
   const { toast } = useToast();
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
@@ -164,20 +164,20 @@ export function CategoryTable() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-  const fetchCategoriesData = () => {
-    startTransition(async () => {
-      const data = await getCategories(currentPage, ITEMS_PER_PAGE, searchTerm);
-      setCategories(data.categories);
-      setTotalPages(data.totalPages);
-      setTotalCount(data.totalCount);
-    });
-  };
+  // const fetchCategoriesData = () => {
+  //   startTransition(async () => {
+  //     const data = await getCategories(currentPage, ITEMS_PER_PAGE, searchTerm);
+  //     // setCategories(data.categories);
+  //     setTotalPages(data.totalPages);
+  //     setTotalCount(data.totalCount);
+  //   });
+  // };
 
-  const { data, error } = useQuery({
+  const { data, error, isLoading } = useQuery<PaginatedCategoryResponse>({
     queryKey: ["categories", currentPage, searchTerm],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories?page=${currentPage}`,
         {
           method: "GET",
           headers: {
@@ -192,13 +192,8 @@ export function CategoryTable() {
     },
   });
 
-  console.log(error);
-
-  useEffect(() => {
-    fetchCategoriesData();
-  }, [currentPage, searchTerm]);
   const getCategorie = data?.data?.data;
-  console.log(getCategorie);
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
@@ -257,6 +252,9 @@ export function CategoryTable() {
     setIsSheetOpen(true);
   };
 
+  if (error) {
+    return <p className="text-center">Error</p>;
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -280,14 +278,7 @@ export function CategoryTable() {
         />
         <StatCard
           title="Avg. Products/Category"
-          value={
-            totalCount > 0
-              ? (
-                  categories.reduce((sum, cat) => sum + cat.productCount, 0) /
-                  totalCount
-                ).toFixed(1)
-              : "0"
-          }
+          value={"8"}
           icon={Package}
           description="Average items per category"
         />
@@ -322,7 +313,7 @@ export function CategoryTable() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableBody>
+              <>
                 {Array(ITEMS_PER_PAGE)
                   .fill(0)
                   .map((_, index) => (
@@ -334,79 +325,85 @@ export function CategoryTable() {
                         <Skeleton className="h-10 w-10 rounded-md" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-[120px]" />
+                        <Skeleton className="h-4w-10" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-4 w-10" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-[80px]" />
+                        <Skeleton className="h-4 w-10" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
+                        <Skeleton className="h-4 w-10" />
                       </TableCell>
                       <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[40px]" />
+                        <Skeleton className="h-4 w-10" />
                       </TableCell>
                     </TableRow>
                   ))}
-              </TableBody>
+              </>
             )}
             {!isLoading &&
-              (getCategorie as Category[])?.map((category: Category) => (
-                <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.id}</TableCell>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell className="max-w-xs truncate text-sm text-gray-600">
-                    {category.description?.slice(0, 30) || "-"}...
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {category.type}
-                  </TableCell>
-                  {/* <TableCell className="text-center">
-                    {category.productCount}
-                  </TableCell> */}
-                  <TableCell>{category.created_at}</TableCell>
-                  <TableCell>{category.updated_at}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-5 w-5" />
-                          <span className="sr-only">Category Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleEditCategory(category)}
-                        >
-                          <Edit2 className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteCategory(category.id)}
-                          className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
-                          disabled={category.productCount > 0} // Disable if products are associated
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              (getCategorie ?? []).map((category: Category) => {
+                const safeCategory: Category = {
+                  ...category,
+                  productCount: category.productCount ?? 0,
+                };
+                return (
+                  <TableRow key={safeCategory.id}>
+                    <TableCell className="font-medium">
+                      {safeCategory.id}
+                    </TableCell>
+                    <TableCell>{safeCategory.name}</TableCell>
+                    <TableCell className="max-w-xs truncate text-sm text-gray-600">
+                      {safeCategory.description?.slice(0, 30) || "-"}...
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {safeCategory.type}
+                    </TableCell>
+                    {/* <TableCell className="text-center">
+                        {safeCategory.productCount}
+                      </TableCell> */}
+                    <TableCell>{safeCategory.created_at}</TableCell>
+                    <TableCell>{safeCategory.updated_at}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-5 w-5" />
+                            <span className="sr-only">Category Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditCategory(safeCategory)}
+                          >
+                            <Edit2 className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleDeleteCategory(safeCategory.id)
+                            }
+                            className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
 
         {/* Enhanced Pagination */}
-        {totalPages > 1 && (
+        {data && data.total_pages > 1 && (
           <EnhancedPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            itemsPerPage={ITEMS_PER_PAGE}
+            currentPage={data?.current_page}
+            totalPages={data?.total_pages}
+            totalCount={data?.total}
+            itemsPerPage={data.per_page}
             isLoading={isLoading}
             onPageChange={handlePageChange}
           />
