@@ -28,34 +28,39 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 
 // Define types to avoid import errors
 type ProductStatus = "active" | "inactive" | "draft";
 
 interface Product {
-  id: string;
+  id: string | number; // Assuming ID can be string or number
   name: string;
-  category: string;
-  price: number;
-  costPrice?: number;
-  stock: number;
-  description?: string;
-  tags?: string[];
-  vendor?: string;
-  images?: string[];
-  status: ProductStatus;
+  description: string;
+  image: string;
+  price: string;
+  category_id: number;
+  status: "active" | "inactive" | "low_stock" | "out_of_stock";
+  cost_price: string;
+  stock_quantity: number;
+  created_at: string;
+  updated_at: string;
+  media: unknown[]; // Replace 'unknown' with a specific Media type if available
+  category: {
+    id: string | number; // Assuming category ID can be string or number
+    name: string;
+  };
 }
 
 // Mock data - replace with your actual imports
-const productCategories = [
-  "Electronics",
-  "Clothing",
-  "Books",
-  "Home & Garden",
-  "Sports",
-];
+// const productCategories = [
+//   "Electronics",
+//   "Clothing",
+//   "Books",
+//   "Home & Garden",
+//   "Sports",
+// ];
 
 // Updated schema to match backend structure
 const productSchema = z.object({
@@ -90,6 +95,32 @@ export function AddProductSheet({
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
 
+  const {
+    data: category,
+    error: categoryError,
+    isLoading: categoryLoading,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      return res.json();
+    },
+  });
+
+  const productCategories = category?.data?.data || [];
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -98,8 +129,8 @@ export function AddProductSheet({
       price: 0,
       stock_quantity: 0,
       description: "",
-      tags: [],
-      vendor: "",
+      // tags: [],
+      // vendor: "",
       status: "active",
     },
   });
@@ -110,17 +141,26 @@ export function AddProductSheet({
       if (productToEdit) {
         const defaultValues = {
           name: productToEdit.name || "",
-          category_id: "1", // Default category ID based on your mock 'productCategories'
-          price: productToEdit.price || 0,
-          cost_price: productToEdit.costPrice,
-          stock_quantity: productToEdit.stock || 0,
+          category_id: productToEdit.category_id
+            ? String(productToEdit.category_id)
+            : "",
+          price:
+            typeof productToEdit.price === "string"
+              ? parseFloat(productToEdit.price)
+              : productToEdit.price || 0,
+          cost_price:
+            typeof productToEdit.cost_price === "string"
+              ? parseFloat(productToEdit.cost_price)
+              : productToEdit.cost_price ?? undefined,
+          stock_quantity: productToEdit.stock_quantity || 0,
           description: productToEdit.description || "",
-          tags: productToEdit.tags || [],
-          vendor: productToEdit.vendor || "",
+          // vendor: productToEdit.vendor || "",
           status: (productToEdit.status || "active") as ProductStatus,
         };
         form.reset(defaultValues);
-        setImagePreviews(productToEdit.images || []);
+        setImagePreviews(
+          (productToEdit as Product & { images?: string[] }).images || []
+        );
         setSelectedFiles([]);
       } else {
         const defaultValues = {
@@ -129,17 +169,14 @@ export function AddProductSheet({
           price: 0,
           stock_quantity: 0,
           description: "",
-          tags: [],
-          vendor: "",
+          // tags: [],
+          // vendor: "",
           status: "active" as ProductStatus,
           cost_price: undefined,
         };
         form.reset(defaultValues);
         setImagePreviews([]);
         setSelectedFiles([]);
-
-        console.log("=== NEW PRODUCT FORM INITIALIZED ===");
-        console.log("Default Values:", defaultValues);
       }
     }
   }, [isOpen, productToEdit, form]);
@@ -147,15 +184,6 @@ export function AddProductSheet({
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
       try {
-        // const token = localStorage.getItem("token");
-
-        console.log("=== SENDING FORMDATA TO BACKEND ===");
-        console.log("API Endpoint: /api/products");
-        console.log("Method: POST");
-        console.log("Authorization: Bearer", token ? "***" : "No token");
-
-        // Log all FormData entries
-        console.log("=== FORMDATA CONTENTS ===");
         const entries = Array.from(formData.entries());
 
         // Group images together for better logging
@@ -168,7 +196,7 @@ export function AddProductSheet({
         });
 
         // Log image files
-        console.log(`images: ${imageEntries.length} files`);
+
         imageEntries.forEach(([key, value], index) => {
           console.log(key);
           if (value instanceof File) {
@@ -182,7 +210,9 @@ export function AddProductSheet({
         });
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
+          productToEdit
+            ? `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productToEdit.id}?_method=PUT`
+            : `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
           {
             method: "POST",
             headers: {
@@ -193,11 +223,6 @@ export function AddProductSheet({
             body: formData,
           }
         );
-
-        console.log("=== API RESPONSE ===");
-        console.log("Status:", res.status);
-        console.log("Status Text:", res.statusText);
-
         if (!res.ok) {
           let errorMessage = "Failed to create product";
           try {
@@ -220,11 +245,9 @@ export function AddProductSheet({
     },
 
     onSuccess: (data) => {
-      console.log("=== PRODUCT CREATION SUCCESS ===");
-      console.log("Created Product:", data);
-
+      console.log(data);
       toast({
-        title: "Product Created",
+        title: data.message || "Product Created",
         description: "The product has been created successfully.",
         variant: "default",
       });
@@ -234,15 +257,9 @@ export function AddProductSheet({
       form.reset();
       setSelectedFiles([]);
       setImagePreviews([]);
-
-      console.log("Form reset and modal closed");
     },
 
     onError: (error: Error) => {
-      console.error("=== PRODUCT CREATION ERROR ===");
-      console.error("Error:", error.message);
-      console.error("Full Error:", error);
-
       toast({
         title: "Error Creating Product",
         description: error.message || "An unexpected error occurred.",
@@ -257,11 +274,6 @@ export function AddProductSheet({
     try {
       setIsSubmitting(true);
 
-      console.log("=== FORM SUBMISSION STARTED ===");
-      console.log("Form Data:", data);
-      console.log("Selected Files Count:", selectedFiles.length);
-
-      // Create FormData object
       const formData = new FormData();
 
       // Add all form fields as strings
@@ -272,17 +284,6 @@ export function AddProductSheet({
       formData.append("status", data.status);
       formData.append("cost_price", data.cost_price?.toString() || "");
       formData.append("stock_quantity", data.stock_quantity.toString());
-
-      // Add optional fields
-      if (data.vendor) {
-        formData.append("vendor", data.vendor);
-      }
-
-      // Add tags as JSON string
-      if (data.tags && data.tags.length > 0) {
-        formData.append("tags", JSON.stringify(data.tags));
-        console.log("Tags added:", data.tags);
-      }
 
       // Add ALL images under the same "images" key
       if (selectedFiles.length > 0) {
@@ -333,21 +334,14 @@ export function AddProductSheet({
 
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        console.warn(`File ${file.name} is not an image, skipping`);
-        toast({
-          title: "Invalid File Type",
-          description: `${file.name} is not an image file`,
-          variant: "destructive",
-        });
         return;
       }
 
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
-        console.warn(`File ${file.name} is too large`);
         toast({
           title: "File Too Large",
-          description: `${file.name} is larger than 10MB`,
+          description: `${file.name} exceeds the 10MB size limit.`,
           variant: "destructive",
         });
         return;
@@ -365,14 +359,14 @@ export function AddProductSheet({
     // Reset input
     event.target.value = "";
 
-    if (validFiles.length > 0) {
-      toast({
-        title: "Images Added",
-        description: `${validFiles.length} image${
-          validFiles.length !== 1 ? "s" : ""
-        } added successfully`,
-      });
-    }
+    // if (validFiles.length > 0) {
+    //   toast({
+    //     title: "Images Added",
+    //     description: `${validFiles.length} image${
+    //       validFiles.length !== 1 ? "s" : ""
+    //     } added successfully`,
+    //   });
+    // }
   };
 
   // Remove specific image
@@ -466,6 +460,16 @@ export function AddProductSheet({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="category_id">Category</Label>
+              {categoryLoading && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Loading categories...
+                </p>
+              )}
+              {categoryError && (
+                <p className="text-xs text-red-500 mt-1">
+                  Failed to load categories
+                </p>
+              )}
               <Controller
                 name="category_id"
                 control={form.control}
@@ -475,11 +479,13 @@ export function AddProductSheet({
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {productCategories.map((cat, index) => (
-                        <SelectItem key={cat} value={(index + 1).toString()}>
-                          {cat}
-                        </SelectItem>
-                      ))}
+                      {productCategories.map(
+                        (cat: { id: string | number; name: string }) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                            {cat.name}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 )}
@@ -570,14 +576,14 @@ export function AddProductSheet({
             />
           </div>
 
-          <div>
+          {/* <div>
             <Label htmlFor="vendor">Vendor</Label>
             <Input
               className="mt-2 h-[44px]"
               id="vendor"
               {...form.register("vendor")}
             />
-          </div>
+          </div> */}
 
           {/* Images Section */}
           <div>

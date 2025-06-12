@@ -106,13 +106,13 @@ export function AddPromoCodeSheet({
         form.reset({
           name: promoCodeToEdit.name,
           description: promoCodeToEdit.description || "",
-          discountType: promoCodeToEdit.discountType,
-          discountValue: promoCodeToEdit.discountValue,
+          discountType: promoCodeToEdit.type,
+          discountValue: promoCodeToEdit.amount,
           minPurchaseAmount: promoCodeToEdit.minPurchaseAmount || 0,
           expiryDate: promoCodeToEdit.expiryDate
             ? new Date(promoCodeToEdit.expiryDate)
             : undefined,
-          usageLimit: promoCodeToEdit.usageLimit || 0,
+          usageLimit: promoCodeToEdit.usage_limit || 0,
           isActive: promoCodeToEdit.isActive,
         });
       } else {
@@ -144,21 +144,35 @@ export function AddPromoCodeSheet({
   };
 
   const mutation = useMutation<unknown, Error, FormData>({
-    mutationFn: async (fromData) => {
+    mutationFn: async (formData) => {
       try {
         setIsSubmitting(true);
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
+          promoCodeToEdit
+            ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${promoCodeToEdit.id}?_method=PUT`
+            : `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
           {
             method: "POST",
             headers: {
+              Accept: "multipart/form-data",
               ...(token && { Authorization: `Bearer ${token}` }),
-              // Don't set Content-Type - let browser set it for FormData
             },
-            body: fromData,
+            body: formData,
           }
         );
+
+        // const res = await fetch(
+        //   `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
+        //   {
+        //     method: "POST",
+        //     headers: {
+        //       ...(token && { Authorization: `Bearer ${token}` }),
+        //       // Don't set Content-Type - let browser set it for FormData
+        //     },
+        //     body: fromData,
+        //   }
+        // );
 
         if (!res.ok) {
           let errorMessage = "Failed to create promo code";
@@ -183,9 +197,10 @@ export function AddPromoCodeSheet({
 
     onSuccess: (data) => {
       toast({
-        title: (typeof data === "object" && data !== null && "message" in data
-          ? (data as { message?: string }).message
-          : undefined) || "Promo Code Created",
+        title:
+          (typeof data === "object" && data !== null && "message" in data
+            ? (data as { message?: string }).message
+            : undefined) || "Promo Code Created",
         description: " Your promo code has been created successfully.",
         variant: "default",
       });

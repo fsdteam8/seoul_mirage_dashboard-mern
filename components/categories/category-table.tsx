@@ -31,14 +31,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Category } from "@/app/dashboard/categories/types";
-import {
-  getCategories,
-  deleteCategoryAction,
-} from "@/app/dashboard/categories/actions";
+import { getCategories } from "@/app/dashboard/categories/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AddCategorySheet } from "./add-category-sheet";
 import { StatCard } from "@/components/stat-card";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Skeleton } from "../ui/skeleton";
+import { useSession } from "next-auth/react";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -159,6 +158,8 @@ export function CategoryTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, startTransition] = useTransition();
   const { toast } = useToast();
+  const session = useSession();
+  const token = session?.data?.accessToken ?? {};
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
@@ -192,6 +193,7 @@ export function CategoryTable() {
   });
 
   console.log(error);
+
   useEffect(() => {
     fetchCategoriesData();
   }, [currentPage, searchTerm]);
@@ -206,29 +208,43 @@ export function CategoryTable() {
     setCurrentPage(page);
   };
 
-  const handleDeleteCategory = async (
-    categoryId: string,
-    categoryName: string
-  ) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`
-      )
-    )
-      return;
-    startTransition(async () => {
-      const result = await deleteCategoryAction(categoryId);
-      if (result.success) {
-        toast({ title: "Category Deleted", description: result.message });
-        fetchCategoriesData(); // Refresh data
-      } else {
-        toast({
-          title: "Error Deleting Category",
-          description: result.message,
-          variant: "destructive",
-        });
+  const mutationDelete = useMutation({
+    mutationFn: async (productId: string) => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "multipart/form-data",
+            ...(token && { Authorization: `Bearer ${token}` }),
+            // Don't set Content-Type - let browser set it for FormData
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete product");
       }
-    });
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Product deleted successfully",
+        description: "The product has been removed from your inventory.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting product",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    mutationDelete.mutate(categoryId);
   };
 
   const handleEditCategory = (category: Category) => {
@@ -305,22 +321,39 @@ export function CategoryTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading &&
-              Array(ITEMS_PER_PAGE)
-                .fill(0)
-                .map((_, index) => (
-                  <TableRow key={`skeleton-cat-${index}`}>
-                    <TableCell colSpan={8} className="h-16 text-center">
-                      Loading categories...
-                    </TableCell>
-                  </TableRow>
-                ))}
-            {!isLoading && categories.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
-                  No categories found.
-                </TableCell>
-              </TableRow>
+            {isLoading && (
+              <TableBody>
+                {Array(ITEMS_PER_PAGE)
+                  .fill(0)
+                  .map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-10" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-10 w-10 rounded-md" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[120px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[200px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[80px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[60px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[60px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[40px]" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
             )}
             {!isLoading &&
               (getCategorie as Category[])?.map((category: Category) => (
@@ -353,9 +386,7 @@ export function CategoryTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            handleDeleteCategory(category.id, category.name)
-                          }
+                          onClick={() => handleDeleteCategory(category.id)}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                           disabled={category.productCount > 0} // Disable if products are associated
                         >

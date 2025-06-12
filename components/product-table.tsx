@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 // import Image from "next/image";
 import {
   Table,
@@ -39,19 +39,19 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  Eye,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddProductSheet } from "./add-product-sheet";
 import { StatCard } from "@/components/stat-card";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "./ui/skeleton";
+import { useSession } from "next-auth/react";
 
 const ITEMS_PER_PAGE = 5;
 
 // Updated Product interface to match your API response
 interface Product {
-  id: number;
+  id: string | number; // Assuming ID can be string or number
   name: string;
   description: string;
   image: string;
@@ -64,7 +64,7 @@ interface Product {
   updated_at: string;
   media: unknown[]; // Replace 'unknown' with a specific Media type if available
   category: {
-    id: number;
+    id: string | number; // Assuming category ID can be string or number
     name: string;
   };
 }
@@ -176,10 +176,11 @@ export function ProductTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  const [isLoading, startTransition] = useTransition();
   const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const session = useSession();
+  const token = session?.data?.accessToken ?? {};
   // Fetch products from your API
   const {
     data,
@@ -251,45 +252,56 @@ export function ProductTable() {
     setCurrentPage(page);
   };
 
-  const handleDeleteProduct = async (productId: number) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
-    startTransition(async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (res.ok) {
-          toast({
-            title: "Product Deleted",
-            description: "Product has been successfully deleted.",
-          });
-          refetch(); // Refresh data
-        } else {
-          throw new Error("Failed to delete product");
+  // Handle product deletion
+  const mutationDelete = useMutation({
+    mutationFn: async (productId: number) => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "multipart/form-data",
+            ...(token && { Authorization: `Bearer ${token}` }),
+            // Don't set Content-Type - let browser set it for FormData
+          },
         }
-      } catch (error) {
-        console.log(error);
-        toast({
-          title: "Error",
-          description: "Failed to delete product. Please try again.",
-          variant: "destructive",
-        });
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete product");
       }
-    });
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Product deleted successfully",
+        description: "The product has been removed from your inventory.",
+      });
+      refetch(); // Refresh the product list
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting product",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteProduct = async (productId: number) => {
+    mutationDelete.mutate(productId);
   };
 
-  const handleAddProduct = () => {
+  const handleProduct = () => {
+    setProductToEdit(null); // Clear any existing product to edit
     setIsSheetOpen(true);
   };
-
+  const handleEditProduct = (product: Product) => {
+    setIsSheetOpen(true);
+    setProductToEdit(product);
+    // You can pass the product data to the sheet if needed
+  };
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -360,7 +372,7 @@ export function ProductTable() {
           Manage Products
         </h2>
         <Button
-          onClick={handleAddProduct}
+          onClick={handleProduct}
           className="bg-brand-black text-brand-white hover:bg-brand-black/80 h-[40px]"
         >
           <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -446,41 +458,41 @@ export function ProductTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(queryLoading || isLoading) &&
+            {queryLoading && (
               <TableBody>
-      {Array(ITEMS_PER_PAGE)
-        .fill(0)
-        .map((_, index) => (
-          <TableRow key={`skeleton-${index}`}>
-            <TableCell>
-              <Skeleton className="h-4 w-10" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-10 w-10 rounded-md" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[120px]" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[200px]" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[80px]" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[60px]" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[60px]" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-4 w-[40px]" />
-            </TableCell>
-          </TableRow>
-        ))}
-    </TableBody>
-            }
-            {!queryLoading && !isLoading && products.length === 0 && (
+                {Array(ITEMS_PER_PAGE)
+                  .fill(0)
+                  .map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-10" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-10 w-10 rounded-md" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[120px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[200px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[80px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[60px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[60px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[40px]" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            )}
+            {!queryLoading && products.length === 0 && (
               <TableRow>
                 <TableCell colSpan={11} className="h-24 text-center">
                   No products found.
@@ -488,7 +500,6 @@ export function ProductTable() {
               </TableRow>
             )}
             {!queryLoading &&
-              !isLoading &&
               products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">#{product.id}</TableCell>
@@ -559,14 +570,18 @@ export function ProductTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        {/* <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" /> View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        </DropdownMenuItem> */}
+                        <DropdownMenuItem
+                          onClick={() => handleEditProduct(product)}
+                        >
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDeleteProduct(product.id)}
+                          onClick={() =>
+                            handleDeleteProduct(Number(product.id))
+                          }
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -585,13 +600,17 @@ export function ProductTable() {
             totalPages={totalPages}
             totalCount={totalCount}
             itemsPerPage={ITEMS_PER_PAGE}
-            isLoading={queryLoading || isLoading}
+            isLoading={queryLoading}
             onPageChange={handlePageChange}
           />
         )}
       </div>
 
-      <AddProductSheet isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      <AddProductSheet
+        productToEdit={productToEdit}
+        isOpen={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+      />
     </div>
   );
 }

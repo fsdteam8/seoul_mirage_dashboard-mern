@@ -66,6 +66,7 @@ export function AddCategorySheet({
   });
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
+
   useEffect(() => {
     if (isOpen) {
       if (categoryToEdit) {
@@ -82,9 +83,10 @@ export function AddCategorySheet({
     }
   }, [isOpen, categoryToEdit, form]);
 
+  console.log(categoryToEdit);
+
   const categoryMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      console.log(data);
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("type", data.type);
@@ -93,12 +95,13 @@ export function AddCategorySheet({
 
       const res = await fetch(
         categoryToEdit
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${categoryToEdit.id}`
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${categoryToEdit.id}?_method=PUT`
           : `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
         {
-          method: categoryToEdit ? "PUT" : "POST",
+          method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Accept: "multipart/form-data",
+            ...(token && { Authorization: `Bearer ${token}` }),
           },
           body: formData,
         }
