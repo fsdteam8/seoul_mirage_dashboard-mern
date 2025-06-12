@@ -85,7 +85,7 @@ export function AddProductSheet({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories?paginate_count=100000`,
         {
           method: "GET",
           headers: {

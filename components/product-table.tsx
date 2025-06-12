@@ -193,7 +193,7 @@ export function ProductTable() {
     },
   });
 
-  console.log(data?.current_page)
+  console.log(data?.current_page);
 
   const products: Product[] = data?.data?.data || [];
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {

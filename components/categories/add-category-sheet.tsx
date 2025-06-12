@@ -23,6 +23,13 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Category } from "@/types/CategoryDataType";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 // Zod schema (no need for image validation now)
 const categorySchema = z.object({
@@ -166,7 +173,19 @@ export function AddCategorySheet({
           {/* Type */}
           <div>
             <Label htmlFor="type">Category Type</Label>
-            <Input className="mt-3" id="type" {...form.register("type")} />
+            <Select
+              onValueChange={(value) => form.setValue("type", value)}
+              value={form.watch("type")}
+            >
+              <SelectTrigger className="mt-3">
+                <SelectValue placeholder="Select a category type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Skincare">Skincare</SelectItem>
+                <SelectItem value="Collections">Collections</SelectItem>
+                {/* <SelectItem value="digital">Digital</SelectItem> */}
+              </SelectContent>
+            </Select>
             {form.formState.errors.type && (
               <p className="text-xs text-red-500 mt-1">
                 {form.formState.errors.type.message}

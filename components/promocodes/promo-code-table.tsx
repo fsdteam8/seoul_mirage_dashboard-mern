@@ -43,6 +43,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import {
   // type PromoCode,
@@ -58,6 +60,7 @@ import { StatCard } from "@/components/stat-card";
 import { useQuery } from "@tanstack/react-query";
 import { PromoCode, PromoCodeResponse } from "@/types/PromocodeDataType";
 import { Skeleton } from "../ui/skeleton";
+import { Badge } from "../ui/badge";
 // import { Badge } from "../ui/badge";
 
 // const ITEMS_PER_PAGE = 10;
@@ -232,8 +235,8 @@ export function PromoCodeTable() {
     setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (value: PromoCodeStatus | "All") => {
-    setStatusFilter(value);
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value as PromoCodeStatus | "All");
     setCurrentPage(1);
   };
 
@@ -273,35 +276,37 @@ export function PromoCodeTable() {
     toast({ title: "Copied!", description: `"${text}" copied to clipboard.` });
   };
 
-  // const getStatusBadgeVariant = (status: PromoCodeStatus) => {
-  //   switch (status) {
-  //     case "Active":
-  //       return "default"; // Greenish
-  //     case "Inactive":
-  //       return "outline"; // Grayish
-  //     case "Expired":
-  //       return "secondary"; // Yellowish/Orangeish
-  //     case "Fully Used":
-  //       return "destructive"; // Reddish
-  //     default:
-  //       return "outline";
-  //   }
-  // };
+  const getStatusBadgeVariant = (status: PromoCodeStatus) => {
+    console.log(status);
 
-  // const getStatusIcon = (status: PromoCodeStatus) => {
-  //   switch (status) {
-  //     case "Active":
-  //       return <CheckCircle className="h-4 w-4 text-green-600" />;
-  //     case "Inactive":
-  //       return <EyeOff className="h-4 w-4 text-gray-500" />;
-  //     case "Expired":
-  //       return <Clock className="h-4 w-4 text-orange-500" />;
-  //     case "Fully Used":
-  //       return <XCircle className="h-4 w-4 text-red-600" />;
-  //     default:
-  //       return null;
-  //   }
-  // };
+    switch (status) {
+      case "active":
+        return "default"; // Greenish
+      case "inactive":
+        return "outline"; // Grayish
+      case "expired":
+        return "secondary"; // Yellowish/Orangeish
+      case "Fully Used":
+        return "destructive"; // Reddish
+      default:
+        return "outline";
+    }
+  };
+
+  const getStatusIcon = (status: PromoCodeStatus) => {
+    switch (status) {
+      case "active":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "inactive":
+        return <EyeOff className="h-4 w-4 text-gray-500" />;
+      case "expired":
+        return <Clock className="h-4 w-4 text-orange-500" />;
+      case "Fully Used":
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return null;
+    }
+  };
 
   // Simulated stats - in a real app, these would come from backend aggregates
   // const activeCodesCount = promoCode.filter(
@@ -357,15 +362,18 @@ export function PromoCodeTable() {
             className="pl-10 w-[256px] h-[49px]"
           />
         </div>
-        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+        <Select
+          value={String(statusFilter)}
+          onValueChange={handleStatusFilterChange}
+        >
           <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Statuses</SelectItem>
             {promoCodeStatuses.map((stat) => (
-              <SelectItem key={stat} value={stat}>
-                {stat}
+              <SelectItem key={String(stat)} value={String(stat)}>
+                {String(stat)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -463,15 +471,15 @@ export function PromoCodeTable() {
                         ? format(new Date(pc.expiryDate), "MMM dd, yyyy")
                         : "Never"}
                     </TableCell> */}
-                    {/* <TableCell>
+                    <TableCell>
                       <Badge
                         variant={getStatusBadgeVariant(pc.status)}
                         className="flex items-center gap-1 capitalize"
                       >
                         {getStatusIcon(pc.status)}
-                        {pc.status.replace(/([A-Z])/g, " $1").trim()}
+                        {pc.status}
                       </Badge>
-                    </TableCell> */}
+                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
