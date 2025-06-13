@@ -1,4 +1,4 @@
-export type OrderPaymentStatus = "Paid" | "Pending" | "Failed"
+export type OrderPaymentStatus = "paid" | "pending" | "failed"
 export type OrderFulfillmentStatus = "Delivered" | "Processing" | "Shipped" | "Cancelled"
 
 export interface OrderItem {
@@ -41,7 +41,7 @@ const generateRandomItems = (): OrderItem[] => {
 export const mockOrders: Order[] = Array.from({ length: 25 }, (_, i) => {
   const items = generateRandomItems()
   const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const paymentStatuses: OrderPaymentStatus[] = ["Paid", "Pending", "Failed"]
+  const paymentStatuses: OrderPaymentStatus[] = ["paid", "pending", "failed"]
   const fulfillmentStatuses: OrderFulfillmentStatus[] = ["Delivered", "Processing", "Shipped", "Cancelled"]
   return {
     id: `ORD-${String(10001 + i).padStart(5, "0")}`,
@@ -55,5 +55,5 @@ export const mockOrders: Order[] = Array.from({ length: 25 }, (_, i) => {
   }
 })
 
-export const orderPaymentStatuses: OrderPaymentStatus[] = ["Paid", "Pending", "Failed"]
+export const orderPaymentStatuses: OrderPaymentStatus[] =["paid", "pending", "failed"]
 export const orderFulfillmentStatuses: OrderFulfillmentStatus[] = ["Delivered", "Processing", "Shipped", "Cancelled"]

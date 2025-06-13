@@ -29,7 +29,7 @@ import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateUniquePromoCodeString } from "@/app/dashboard/promocodes/actions";
 import type { PromoCode } from "@/app/dashboard/promocodes/types";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 // import { json } from "stream/consumers";
 
@@ -87,6 +87,7 @@ export function AddPromoCodeSheet({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
+  const queryClient = useQueryClient();
   const form = useForm<PromoCodeFormValues>({
     resolver: zodResolver(promoCodeSchema),
     defaultValues: {
@@ -150,7 +151,7 @@ export function AddPromoCodeSheet({
 
         const res = await fetch(
           promoCodeToEdit
-            ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${promoCodeToEdit.id}?_method=PUT`
+            ? `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes/${promoCodeToEdit.id}?_method=PUT`
             : `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
           {
             method: "POST",
@@ -204,7 +205,7 @@ export function AddPromoCodeSheet({
         description: " Your promo code has been created successfully.",
         variant: "default",
       });
-
+      queryClient.invalidateQueries({ queryKey: ["promocodes"] });
       setIsSubmitting(false);
       onOpenChange(false); // Close the sheet after successful creation
       form.reset(); // Reset the form to default values

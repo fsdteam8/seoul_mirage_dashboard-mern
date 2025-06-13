@@ -32,19 +32,25 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Product } from "@/types/ProductDataType";
 
-// Define types to avoid import errors
+// Define types
 type ProductStatus = "active" | "inactive" | "draft";
 
-// Mock data - replace with your actual imports
-// const productCategories = [
-//   "Electronics",
-//   "Clothing",
-//   "Books",
-//   "Home & Garden",
-//   "Sports",
-// ];
+// export interface Product {
+//   id: number;
+//   name: string;
+//   description?: string;
+//   price: string | number;
+//   cost_price?: string | number;
+//   stock_quantity: number;
+//   category_id: number | string;
+//   status: ProductStatus;
+//   created_at?: string;
+//   updated_at?: string;
+//   media?: { id: number; product_id: number; file_path: string }[];
+//   category?: { id: number; name: string };
+// }
 
-// Updated schema to match backend structure
+// Schema for form validation
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
   category_id: z.string().min(1, "Category is required"),
@@ -77,6 +83,8 @@ export function AddProductSheet({
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
   const queryClient = useQueryClient();
+
+  // Fetch categories
   const {
     data: category,
     error: categoryError,
@@ -95,7 +103,7 @@ export function AddProductSheet({
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error("Failed to fetch categories");
       }
       return res.json();
     },
@@ -103,6 +111,7 @@ export function AddProductSheet({
 
   const productCategories = category?.data?.data || [];
 
+  // Form setup
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -111,8 +120,6 @@ export function AddProductSheet({
       price: 0,
       stock_quantity: 0,
       description: "",
-      // tags: [],
-      // vendor: "",
       status: "active",
     },
   });
@@ -136,13 +143,17 @@ export function AddProductSheet({
               : productToEdit.cost_price ?? undefined,
           stock_quantity: productToEdit.stock_quantity || 0,
           description: productToEdit.description || "",
-          // vendor: productToEdit.vendor || "",
           status: (productToEdit.status || "active") as ProductStatus,
         };
         form.reset(defaultValues);
-        setImagePreviews(
-          (productToEdit as Product & { images?: string[] }).images || []
-        );
+
+        // Set image previews from media array
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        const imageUrls =
+          productToEdit.media?.map(
+            (media) => `${baseUrl}/${media.file_path}`
+          ) || [];
+        setImagePreviews(imageUrls);
         setSelectedFiles([]);
       } else {
         const defaultValues = {
@@ -151,8 +162,6 @@ export function AddProductSheet({
           price: 0,
           stock_quantity: 0,
           description: "",
-          // tags: [],
-          // vendor: "",
           status: "active" as ProductStatus,
           cost_price: undefined,
         };
@@ -163,30 +172,22 @@ export function AddProductSheet({
     }
   }, [isOpen, productToEdit, form]);
 
+  // Mutation for creating/updating product
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
       try {
         const entries = Array.from(formData.entries());
 
-        // Group images together for better logging
-        const imageEntries = entries.filter(([key]) => key === "images");
-        const otherEntries = entries.filter(([key]) => key !== "images");
-
-        // Log non-image fields
-        otherEntries.forEach(([key, value]) => {
-          console.log(`${key}:`, value);
-        });
-
-        // Log image files
-
-        imageEntries.forEach(([key, value], index) => {
-          console.log(key);
+        // Log form data
+        const imageEntries = entries.filter(([key]) => key.includes("images"));
+        const otherEntries = entries.filter(([key]) => !key.includes("images"));
+        otherEntries.forEach(([key, value]) => console.log(`${key}:`, value));
+        imageEntries.forEach(([, value], index) => {
           if (value instanceof File) {
-            console.log(`  images[${index}]:`, {
+            console.log(`images[${index}]:`, {
               name: value.name,
               size: `${(value.size / 1024).toFixed(2)} KB`,
               type: value.type,
-              lastModified: new Date(value.lastModified).toISOString(),
             });
           }
         });
@@ -200,32 +201,23 @@ export function AddProductSheet({
             headers: {
               Accept: "multipart/form-data",
               ...(token && { Authorization: `Bearer ${token}` }),
-              // Don't set Content-Type - let browser set it for FormData
             },
             body: formData,
           }
         );
+
         if (!res.ok) {
-          let errorMessage = "Failed to create product";
-          try {
-            const error = await res.json();
-            errorMessage = error.message || errorMessage;
-            console.error("API Error Response:", error);
-          } catch (e) {
-            console.error("Failed to parse error response:", e);
-          }
-          throw new Error(errorMessage);
+          const error = await res.json();
+          throw new Error(error.message || "Failed to create product");
         }
 
-        const result = await res.json();
-        return result;
+        return res.json();
       } catch (error) {
         console.error("Mutation error:", error);
         throw error;
       }
     },
     onSuccess: (data) => {
-      console.log(data);
       toast({
         title: data.message || "Product Created",
         description: "The product has been created successfully.",
@@ -238,25 +230,21 @@ export function AddProductSheet({
       setSelectedFiles([]);
       setImagePreviews([]);
     },
-
     onError: (error: Error) => {
       toast({
         title: "Error Creating Product",
         description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
-
       setIsSubmitting(false);
     },
   });
 
+  // Form submission
   const onSubmit = async (data: ProductFormValues) => {
     try {
       setIsSubmitting(true);
-
       const formData = new FormData();
-
-      // Add all form fields as strings
       formData.append("name", data.name);
       formData.append("description", data.description || "");
       formData.append("category_id", data.category_id);
@@ -265,27 +253,12 @@ export function AddProductSheet({
       formData.append("cost_price", data.cost_price?.toString() || "");
       formData.append("stock_quantity", data.stock_quantity.toString());
 
-      // Add ALL images under the same "images" key
       if (selectedFiles.length > 0) {
-        console.log("=== ADDING IMAGES TO FORMDATA ===");
         selectedFiles.forEach((file, index) => {
           formData.append(`images[${index}]`, file);
-          console.log(`Added images[${index}]:`, {
-            name: file.name,
-            size: `${(file.size / 1024).toFixed(2)} KB`,
-            type: file.type,
-          });
         });
-        console.log(`Total images added: ${selectedFiles.length}`);
       }
 
-      console.log("=== FORMDATA PREPARATION COMPLETE ===");
-      console.log(
-        "Total FormData entries:",
-        Array.from(formData.entries()).length
-      );
-
-      // Submit the FormData
       await mutation.mutateAsync(formData);
     } catch (error) {
       console.error("Submit error:", error);
@@ -298,26 +271,12 @@ export function AddProductSheet({
     const files = event.target.files;
     if (!files) return;
 
-    console.log("=== NEW FILES SELECTED ===");
-    console.log("Number of files:", files.length);
-
     const newFiles = Array.from(files);
     const validFiles: File[] = [];
     const newPreviews: string[] = [];
 
-    newFiles.forEach((file, index) => {
-      console.log(`File ${index + 1}:`, {
-        name: file.name,
-        size: `${(file.size / 1024).toFixed(2)} KB`,
-        type: file.type,
-      });
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        return;
-      }
-
-      // Validate file size (10MB limit)
+    newFiles.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "File Too Large",
@@ -326,45 +285,27 @@ export function AddProductSheet({
         });
         return;
       }
-
       validFiles.push(file);
-      const previewUrl = URL.createObjectURL(file);
-      newPreviews.push(previewUrl);
+      newPreviews.push(URL.createObjectURL(file));
     });
 
-    // Update state
     setSelectedFiles((prev) => [...prev, ...validFiles]);
     setImagePreviews((prev) => [...prev, ...newPreviews]);
-
-    // Reset input
     event.target.value = "";
-
-    // if (validFiles.length > 0) {
-    //   toast({
-    //     title: "Images Added",
-    //     description: `${validFiles.length} image${
-    //       validFiles.length !== 1 ? "s" : ""
-    //     } added successfully`,
-    //   });
-    // }
   };
 
   // Remove specific image
   const removeImage = (indexToRemove: number) => {
-    console.log("Removing image at index:", indexToRemove);
-
     const previewToRemove = imagePreviews[indexToRemove];
     if (previewToRemove?.startsWith("blob:")) {
       URL.revokeObjectURL(previewToRemove);
     }
-
     setImagePreviews((prev) =>
       prev.filter((_, index) => index !== indexToRemove)
     );
     setSelectedFiles((prev) =>
       prev.filter((_, index) => index !== indexToRemove)
     );
-
     toast({
       title: "Image Removed",
       description: "Image has been removed from the selection",
@@ -378,10 +319,8 @@ export function AddProductSheet({
         URL.revokeObjectURL(preview);
       }
     });
-
     setImagePreviews([]);
     setSelectedFiles([]);
-
     toast({
       title: "All Images Cleared",
       description: "All images have been removed",
@@ -556,16 +495,6 @@ export function AddProductSheet({
             />
           </div>
 
-          {/* <div>
-            <Label htmlFor="vendor">Vendor</Label>
-            <Input
-              className="mt-2 h-[44px]"
-              id="vendor"
-              {...form.register("vendor")}
-            />
-          </div> */}
-
-          {/* Images Section */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="flex items-center gap-2">
