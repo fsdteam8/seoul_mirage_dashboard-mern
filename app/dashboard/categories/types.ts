@@ -7,6 +7,7 @@ export interface Category {
     productCount: number // Number of products associated with this category
     created_at: string // Should be Date in a real app
     updated_at: string // Should be Date in a real app
+
   }
   
   const generateRandomDate = (start: Date, end: Date): string => {

@@ -1,5 +1,5 @@
 export type type = "percentage" | "fixed";
-export type PromoCodeStatus = "Active" | "Inactive" | "Expired" | "Fully Used";
+export type PromoCodeStatus = string
 
 export interface PromoCode {
   id: string;
@@ -169,9 +169,9 @@ export const mockPromoCodes: PromoCode[] = [
 ];
 
 export const promoCodeStatuses: PromoCodeStatus[] = [
-  "Active",
-  "Inactive",
-  "Expired",
+  "active",
+  "inactive",
+  "expired",
   "Fully Used",
 ];
 export const types: type[] = ["percentage", "fixed"];
@@ -180,10 +180,10 @@ export const types: type[] = ["percentage", "fixed"];
 export const getEffectivePromoCodeStatus = (
   promo: PromoCode
 ): PromoCodeStatus => {
-  if (!promo.isActive) return "Inactive";
+  if (!promo.isActive) return "inactive";
   if (promo.expiryDate && new Date(promo.expiryDate) < new Date())
-    return "Expired";
+    return "expired";
   if (promo.usage_limit && promo.timesUsed >= promo.usage_limit)
     return "Fully Used";
-  return "Active";
+  return "active";
 };
