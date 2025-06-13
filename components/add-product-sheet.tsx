@@ -28,30 +28,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { Product } from "@/types/ProductDataType";
 
 // Define types to avoid import errors
 type ProductStatus = "active" | "inactive" | "draft";
-
-interface Product {
-  id: string | number; // Assuming ID can be string or number
-  name: string;
-  description: string;
-  image: string;
-  price: string;
-  category_id: number;
-  status: "active" | "inactive" | "low_stock" | "out_of_stock";
-  cost_price: string;
-  stock_quantity: number;
-  created_at: string;
-  updated_at: string;
-  media: unknown[]; // Replace 'unknown' with a specific Media type if available
-  category: {
-    id: string | number; // Assuming category ID can be string or number
-    name: string;
-  };
-}
 
 // Mock data - replace with your actual imports
 // const productCategories = [
@@ -94,7 +76,7 @@ export function AddProductSheet({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
-
+  const queryClient = useQueryClient();
   const {
     data: category,
     error: categoryError,
@@ -103,7 +85,7 @@ export function AddProductSheet({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories?paginate_count=100000`,
         {
           method: "GET",
           headers: {
@@ -236,14 +218,12 @@ export function AddProductSheet({
         }
 
         const result = await res.json();
-        console.log("API Success Response:", result);
         return result;
       } catch (error) {
         console.error("Mutation error:", error);
         throw error;
       }
     },
-
     onSuccess: (data) => {
       console.log(data);
       toast({
@@ -251,7 +231,7 @@ export function AddProductSheet({
         description: "The product has been created successfully.",
         variant: "default",
       });
-
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsSubmitting(false);
       onOpenChange(false);
       form.reset();

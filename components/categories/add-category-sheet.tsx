@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,9 +19,17 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Category } from "@/app/dashboard/categories/types";
+// import type { Category } from "@/app/dashboard/categories/types";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { Category } from "@/types/CategoryDataType";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 // Zod schema (no need for image validation now)
 const categorySchema = z.object({
@@ -53,6 +61,7 @@ export function AddCategorySheet({
   categoryToEdit,
 }: AddCategorySheetProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -82,8 +91,6 @@ export function AddCategorySheet({
       }
     }
   }, [isOpen, categoryToEdit, form]);
-
-  console.log(categoryToEdit);
 
   const categoryMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
@@ -117,6 +124,7 @@ export function AddCategorySheet({
         description: data.message,
       });
       onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       form.reset();
     },
     onError: (error) => {
@@ -167,7 +175,19 @@ export function AddCategorySheet({
           {/* Type */}
           <div>
             <Label htmlFor="type">Category Type</Label>
-            <Input className="mt-3" id="type" {...form.register("type")} />
+            <Select
+              onValueChange={(value) => form.setValue("type", value)}
+              value={form.watch("type")}
+            >
+              <SelectTrigger className="mt-3">
+                <SelectValue placeholder="Select a category type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Skincare">Skincare</SelectItem>
+                <SelectItem value="Collections">Collections</SelectItem>
+                {/* <SelectItem value="digital">Digital</SelectItem> */}
+              </SelectContent>
+            </Select>
             {form.formState.errors.type && (
               <p className="text-xs text-red-500 mt-1">
                 {form.formState.errors.type.message}

@@ -1,8 +1,7 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -30,18 +29,17 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { Category } from "@/app/dashboard/categories/types";
-import { getCategories } from "@/app/dashboard/categories/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AddCategorySheet } from "./add-category-sheet";
 import { StatCard } from "@/components/stat-card";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "../ui/skeleton";
 import { useSession } from "next-auth/react";
+import { Category, PaginatedCategoryResponse } from "@/types/CategoryDataType";
+import AlertModal from "../ui/alert-modal";
 
 const ITEMS_PER_PAGE = 5;
 
-// Enhanced Pagination Component
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -59,33 +57,19 @@ function EnhancedPagination({
   isLoading = false,
   onPageChange,
 }: PaginationProps) {
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      // Show pages around current page
       let start = Math.max(1, currentPage - 2);
       let end = Math.min(totalPages, currentPage + 2);
-
-      // Adjust if we're near the beginning or end
-      if (currentPage <= 3) {
-        end = Math.min(5, totalPages);
-      } else if (currentPage >= totalPages - 2) {
+      if (currentPage <= 3) end = Math.min(5, totalPages);
+      else if (currentPage >= totalPages - 2)
         start = Math.max(1, totalPages - 4);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
+      for (let i = start; i <= end; i++) pages.push(i);
     }
-
     return pages;
   };
 
@@ -95,16 +79,12 @@ function EnhancedPagination({
 
   return (
     <div className="flex items-center justify-between border-t bg-white px-6 py-4">
-      {/* Results count */}
       <div className="text-sm text-gray-700">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalCount}</span> results
       </div>
-
-      {/* Pagination controls */}
       <div className="flex items-center space-x-1">
-        {/* Previous button */}
         <Button
           variant="outline"
           size="sm"
@@ -114,8 +94,6 @@ function EnhancedPagination({
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
         </Button>
-
-        {/* Page numbers */}
         <div className="flex items-center space-x-1 mx-2">
           {pageNumbers.map((pageNum) => (
             <Button
@@ -134,8 +112,6 @@ function EnhancedPagination({
             </Button>
           ))}
         </div>
-
-        {/* Next button */}
         <Button
           variant="outline"
           size="sm"
@@ -151,100 +127,82 @@ function EnhancedPagination({
 }
 
 export function CategoryTable() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, startTransition] = useTransition();
   const { toast } = useToast();
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
-
+  const queryClient = useQueryClient();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-  const fetchCategoriesData = () => {
-    startTransition(async () => {
-      const data = await getCategories(currentPage, ITEMS_PER_PAGE, searchTerm);
-      setCategories(data.categories);
-      setTotalPages(data.totalPages);
-      setTotalCount(data.totalCount);
-    });
-  };
+  // 👇 Confirmation Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [categoryIdToDelete, setCategoryIdToDelete] = useState<string | null>(
+    null
+  );
 
-  const { data, error } = useQuery({
+  const { data, error, isLoading } = useQuery<PaginatedCategoryResponse>({
     queryKey: ["categories", currentPage, searchTerm],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories?page=${currentPage}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
-      if (!res.ok) {
-        throw new Error("Failed to fetch blogs");
-      }
+      if (!res.ok) throw new Error("Failed to fetch categories");
       return res.json();
     },
   });
 
-  console.log(error);
-
-  useEffect(() => {
-    fetchCategoriesData();
-  }, [currentPage, searchTerm]);
-  const getCategorie = data?.data?.data;
-  console.log(getCategorie);
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const categories = data?.data?.data;
 
   const mutationDelete = useMutation({
-    mutationFn: async (productId: string) => {
+    mutationFn: async (categoryId: string) => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${categoryId}`,
         {
           method: "DELETE",
           headers: {
             Accept: "multipart/form-data",
             ...(token && { Authorization: `Bearer ${token}` }),
-            // Don't set Content-Type - let browser set it for FormData
           },
         }
       );
-
-      if (!res.ok) {
-        throw new Error("Failed to delete product");
-      }
-
+      if (!res.ok) throw new Error("Failed to delete category");
       return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Product deleted successfully",
-        description: "The product has been removed from your inventory.",
+        title: "Category deleted successfully",
+        description: "The category has been removed.",
       });
+      setIsModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error deleting product",
+        title: "Error deleting category",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    mutationDelete.mutate(categoryId);
+  // 👇 Delete with modal confirmation
+  const handleDeleteClick = (categoryId: string) => {
+    setCategoryIdToDelete(categoryId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (categoryIdToDelete) {
+      mutationDelete.mutate(categoryIdToDelete);
+      setCategoryIdToDelete(null);
+    }
   };
 
   const handleEditCategory = (category: Category) => {
@@ -256,6 +214,15 @@ export function CategoryTable() {
     setCategoryToEdit(null);
     setIsSheetOpen(true);
   };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => setCurrentPage(page);
+
+  if (error) return <p className="text-center">Error</p>;
 
   return (
     <div className="space-y-6">
@@ -280,14 +247,7 @@ export function CategoryTable() {
         />
         <StatCard
           title="Avg. Products/Category"
-          value={
-            totalCount > 0
-              ? (
-                  categories.reduce((sum, cat) => sum + cat.productCount, 0) /
-                  totalCount
-                ).toFixed(1)
-              : "0"
-          }
+          value={"8"}
           icon={Package}
           description="Average items per category"
         />
@@ -314,51 +274,30 @@ export function CategoryTable() {
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Type</TableHead>
-              {/* <TableHead className="text-center">Products</TableHead> */}
               <TableHead>Created At</TableHead>
               <TableHead>Updated At</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && (
-              <TableBody>
-                {Array(ITEMS_PER_PAGE)
-                  .fill(0)
-                  .map((_, index) => (
-                    <TableRow key={`skeleton-${index}`}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-10" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-10 w-10 rounded-md" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[120px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[200px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[80px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[40px]" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            )}
+            {isLoading &&
+              Array(ITEMS_PER_PAGE)
+                .fill(0)
+                .map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    {Array(7)
+                      .fill(0)
+                      .map((__, i) => (
+                        <TableCell key={i}>
+                          <Skeleton className="h-4 w-10" />
+                        </TableCell>
+                      ))}
+                  </TableRow>
+                ))}
             {!isLoading &&
-              (getCategorie as Category[])?.map((category: Category) => (
+              (categories ?? []).map((category) => (
                 <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.id}</TableCell>
+                  <TableCell>{category.id}</TableCell>
                   <TableCell>{category.name}</TableCell>
                   <TableCell className="max-w-xs truncate text-sm text-gray-600">
                     {category.description?.slice(0, 30) || "-"}...
@@ -366,9 +305,6 @@ export function CategoryTable() {
                   <TableCell className="text-sm text-gray-600">
                     {category.type}
                   </TableCell>
-                  {/* <TableCell className="text-center">
-                    {category.productCount}
-                  </TableCell> */}
                   <TableCell>{category.created_at}</TableCell>
                   <TableCell>{category.updated_at}</TableCell>
                   <TableCell>
@@ -386,9 +322,8 @@ export function CategoryTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDeleteCategory(category.id)}
+                          onClick={() => handleDeleteClick(category.id)}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
-                          disabled={category.productCount > 0} // Disable if products are associated
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
@@ -400,18 +335,26 @@ export function CategoryTable() {
           </TableBody>
         </Table>
 
-        {/* Enhanced Pagination */}
-        {totalPages > 1 && (
+        {data && data.total_pages > 1 && (
           <EnhancedPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            itemsPerPage={ITEMS_PER_PAGE}
+            currentPage={data.current_page}
+            totalPages={data.total_pages}
+            totalCount={data.total}
+            itemsPerPage={data.per_page}
             isLoading={isLoading}
             onPageChange={handlePageChange}
           />
         )}
       </div>
+
+      <AlertModal
+        title="Are you sure you want to delete this category?"
+        message="This action cannot be undone."
+        loading={mutationDelete.isPending}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       <AddCategorySheet
         isOpen={isSheetOpen}

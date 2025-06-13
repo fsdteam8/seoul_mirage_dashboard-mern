@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 // import Image from "next/image";
 import {
   Table,
@@ -46,28 +46,9 @@ import { StatCard } from "@/components/stat-card";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
-
-const ITEMS_PER_PAGE = 5;
-
-// Updated Product interface to match your API response
-interface Product {
-  id: string | number; // Assuming ID can be string or number
-  name: string;
-  description: string;
-  image: string;
-  price: string;
-  category_id: number;
-  status: "active" | "inactive" | "low_stock" | "out_of_stock";
-  cost_price: string;
-  stock_quantity: number;
-  created_at: string;
-  updated_at: string;
-  media: unknown[]; // Replace 'unknown' with a specific Media type if available
-  category: {
-    id: string | number; // Assuming category ID can be string or number
-    name: string;
-  };
-}
+import Image from "next/image";
+import { Product, ProductApiResponse } from "@/types/ProductDataType";
+import AlertModal from "./ui/alert-modal";
 
 // Enhanced Pagination Component
 interface PaginationProps {
@@ -170,9 +151,9 @@ function EnhancedPagination({
 }
 
 export function ProductTable() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -180,6 +161,9 @@ export function ProductTable() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const session = useSession();
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(
+    null
+  );
   const token = session?.data?.accessToken ?? {};
   // Fetch products from your API
   const {
@@ -187,7 +171,7 @@ export function ProductTable() {
     error,
     isLoading: queryLoading,
     refetch,
-  } = useQuery({
+  } = useQuery<ProductApiResponse>({
     queryKey: [
       "products",
       currentPage,
@@ -196,16 +180,8 @@ export function ProductTable() {
       statusFilter,
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-        ...(searchTerm && { search: searchTerm }),
-        ...(categoryFilter !== "All" && { category: categoryFilter }),
-        ...(statusFilter !== "All Status" && { status: statusFilter }),
-      });
-
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products?page=${currentPage}`,
         {
           method: "GET",
           headers: {
@@ -223,15 +199,6 @@ export function ProductTable() {
   });
 
   const products: Product[] = data?.data?.data || [];
-  const pagination = data?.data?.pagination || {};
-
-  // Update pagination info when data changes
-  useEffect(() => {
-    if (pagination) {
-      setTotalPages(pagination.last_page || 1);
-      setTotalCount(pagination.total || 0);
-    }
-  }, [pagination]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -289,8 +256,17 @@ export function ProductTable() {
     },
   });
 
-  const handleDeleteProduct = async (productId: number) => {
-    mutationDelete.mutate(productId);
+  const handleDeleteClick = (productId: string) => {
+    setProductIdToDelete(productId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (productIdToDelete) {
+      mutationDelete.mutate(Number(productIdToDelete));
+      setProductIdToDelete(null);
+      setIsModalOpen(false);
+    }
   };
 
   const handleProduct = () => {
@@ -339,7 +315,6 @@ export function ProductTable() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
-
   // Calculate stats
   const totalProductsCount = totalCount;
   const lowStockCount = products.filter((p) => p.status === "low_stock").length;
@@ -459,38 +434,45 @@ export function ProductTable() {
           </TableHeader>
           <TableBody>
             {queryLoading && (
-              <TableBody>
-                {Array(ITEMS_PER_PAGE)
-                  .fill(0)
-                  .map((_, index) => (
-                    <TableRow key={`skeleton-${index}`}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-10" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-10 w-10 rounded-md" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[120px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[200px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[80px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[60px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[40px]" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-10" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-12" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-16" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
             {!queryLoading && products.length === 0 && (
               <TableRow>
@@ -504,15 +486,16 @@ export function ProductTable() {
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">#{product.id}</TableCell>
                   <TableCell>
-                    {/* <Image
+                    <Image
                       src={
-                        `${process.env.NEXT_PUBLIC_API_URL}/${product.image}` || "/placeholder.svg?height=40&width=40"
+                        `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0]?.file_path}` ||
+                        "/placeholder.svg?height=40&width=40"
                       }
                       alt={product.name}
                       width={40}
                       height={40}
                       className="rounded-md object-cover"
-                    /> */}
+                    />
                   </TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">
                     {product.name}
@@ -579,9 +562,7 @@ export function ProductTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            handleDeleteProduct(Number(product.id))
-                          }
+                          onClick={() => handleDeleteClick(String(product.id))}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -594,17 +575,26 @@ export function ProductTable() {
           </TableBody>
         </Table>
 
-        {totalPages > 1 && (
+        {data && data?.total_pages > 1 && (
           <EnhancedPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            itemsPerPage={ITEMS_PER_PAGE}
+            currentPage={data?.current_page}
+            totalPages={data?.total_pages}
+            totalCount={data?.total}
+            itemsPerPage={data?.per_page}
             isLoading={queryLoading}
             onPageChange={handlePageChange}
           />
         )}
       </div>
+
+      <AlertModal
+        title="Are you sure you want to delete this Product?"
+        message="This action cannot be undone."
+        loading={mutationDelete.isPending}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       <AddProductSheet
         productToEdit={productToEdit}
