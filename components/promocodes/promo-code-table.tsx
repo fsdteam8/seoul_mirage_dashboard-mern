@@ -502,7 +502,7 @@ export function PromoCodeTable() {
                             ) : (
                               <Eye className="mr-2 h-4 w-4" />
                             )}
-                            {pc.status == "Deactivate"
+                            {pc.status == "inactive"
                               ? "Deactivate"
                               : "Activate"}
                           </DropdownMenuItem>
