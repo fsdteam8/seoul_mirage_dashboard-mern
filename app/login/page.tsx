@@ -53,6 +53,8 @@ export default function LoginPage() {
         });
         return;
       }
+
+      // add rotue push 
       setTimeout(() => {
   router.push("/dashboard");
 }, 100); // 100ms delay
