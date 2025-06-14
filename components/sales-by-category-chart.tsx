@@ -1,7 +1,20 @@
-"use client"
+"use client";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const data = [
   { name: "Category A", value: 275 },
@@ -9,11 +22,11 @@ const data = [
   { name: "Category C", value: 187 },
   { name: "Category D", value: 173 },
   { name: "Category E", value: 90 },
-]
+];
 
 // Updated COLORS to match Figma visual (DarkPink, Orange, Purple, Peach, Yellow)
 // For data: Cat A (275), Cat B (200), Cat C (187), Cat D (173), Cat E (90)
-const COLORS = ["#D81B60", "#E76E50", "#AD1457", "#F4A462", "#E8C468"]
+const COLORS = ["#D81B60", "#E76E50", "#AD1457", "#F4A462", "#E8C468"];
 
 interface LabelProps {
   cx: number;
@@ -23,21 +36,27 @@ interface LabelProps {
   value: number;
 }
 
-const RADIAN = Math.PI / 180
-const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius = 0, value }: LabelProps) => {
-  const LABEL_OFFSET = 18 // How far from the slice the label should be
-  const radius = outerRadius + LABEL_OFFSET
-  const x = cx + radius * Math.cos(-midAngle * RADIAN)
-  const y = cy + radius * Math.sin(-midAngle * RADIAN)
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius = 0,
+  value,
+}: LabelProps) => {
+  const LABEL_OFFSET = 18; // How far from the slice the label should be
+  const radius = outerRadius + LABEL_OFFSET;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   // Determine text anchor based on position relative to center
-  let textAnchor = "middle"
+  let textAnchor = "middle";
   if (x > cx) {
     // Right side
-    textAnchor = "start"
+    textAnchor = "start";
   } else if (x < cx) {
     // Left side
-    textAnchor = "end"
+    textAnchor = "end";
   }
 
   return (
@@ -52,15 +71,19 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius = 0, value }: Lab
     >
       {`${value}`}
     </text>
-  )
-}
+  );
+};
 
 export function SalesByCategoryChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Sales by Category</CardTitle>
-        <CardDescription className="text-sm text-gray-500">January - June 2024</CardDescription>
+        <CardTitle className="text-lg font-semibold">
+          Sales by Category
+        </CardTitle>
+        <CardDescription className="text-sm text-gray-500">
+          January - June 2024
+        </CardDescription>
       </CardHeader>
       <CardContent className="py-4">
         <ResponsiveContainer width="100%" height={300}>
@@ -79,10 +102,15 @@ export function SalesByCategoryChart() {
               stroke="none"
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number, name: string) => [`$${value}`, name]} />
+            <Tooltip
+              formatter={(value: number, name: string) => [`$${value}`, name]}
+            />
             <Legend
               iconType="square"
               iconSize={10}
@@ -90,11 +118,13 @@ export function SalesByCategoryChart() {
               verticalAlign="middle"
               align="right"
               wrapperStyle={{ fontSize: "12px", paddingLeft: "20px" }} // Increased padding for legend
-              formatter={(value) => <span style={{ color: "#333" }}>{value}</span>}
+              formatter={(value) => (
+                <span style={{ color: "#333" }}>{value}</span>
+              )}
             />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

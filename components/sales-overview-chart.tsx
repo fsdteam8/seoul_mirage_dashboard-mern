@@ -3,6 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+
 const data = [
   { month: "January", sales: 186 },
   { month: "February", sales: 305 },
