@@ -44,11 +44,12 @@ import {
   orderFulfillmentStatuses,
 } from "@/app/dashboard/orders/types";
 import { StatCard } from "@/components/stat-card";
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "./ui/skeleton";
 import { OrdersApiResponse } from "@/types/OrderDataType";
 import { useSession } from "next-auth/react";
+import OrderDetails from "@/app/dashboard/orders/_components/order-details-popup";
 
 // const ITEMS_PER_PAGE = 10;
 
@@ -159,12 +160,13 @@ function EnhancedPagination({
 }
 
 export function OrderTable() {
-  const { toast } = useToast();
+  // const { toast } = useToast();
   // const [allOrders] = useState<Order[]>(mockOrders); // Store all orders for client-side filtering/sorting
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [isOpen, setIsOpen] = useState(false);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
   // Add sorting state if needed, e.g., { column: 'date', direction: 'desc' }
@@ -254,27 +256,27 @@ export function OrderTable() {
     setCurrentPage(page);
   };
 
-  interface ViewOrder {
-    id: string;
-    uniq_id?: string;
-    customerName?: string;
-    full_name?: string;
-    totalAmount?: number;
-    shipping_price?: number;
-    [key: string]: unknown;
-  }
+  // interface ViewOrder {
+  //   id: string;
+  //   uniq_id?: string;
+  //   customerName?: string;
+  //   full_name?: string;
+  //   totalAmount?: number;
+  //   shipping_price?: number;
+  //   [key: string]: unknown;
+  // }
 
-  const viewOrderDetails = (order: ViewOrder) => {
-    // In a real app, this might open a modal or navigate to an order detail page
-    toast({
-      title: `Order Details: ${order.id}`,
-      description: `Customer: ${
-        order.customerName ?? order.full_name ?? ""
-      }, Total: $${(order.totalAmount ?? order.shipping_price ?? 0).toFixed(
-        2
-      )}`,
-    });
-  };
+  // const viewOrderDetails = (order: ViewOrder) => {
+  //   // In a real app, this might open a modal or navigate to an order detail page
+  //   toast({
+  //     title: `Order Details: ${order.id}`,
+  //     description: `Customer: ${
+  //       order.customerName ?? order.full_name ?? ""
+  //     }, Total: $${(order.totalAmount ?? order.shipping_price ?? 0).toFixed(
+  //       2
+  //     )}`,
+  //   });
+  // };
 
   const getPaymentBadgeVariant = (status: string) => {
     if (status === "Paid") return "default"; // Greenish
@@ -427,8 +429,8 @@ export function OrderTable() {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell className="font-medium">{order.uniq_id}</TableCell>
-                  <TableCell>{order.full_name}</TableCell>
-                  <TableCell>{order.email}</TableCell>
+                  <TableCell>{order.customer.full_name}</TableCell>
+                  <TableCell>{order.customer.email}</TableCell>
                   <TableCell>{order.created_at}</TableCell>
                   <TableCell>{order.items}item(s)</TableCell>
                   <TableCell>${order.shipping_price}</TableCell>
@@ -475,13 +477,14 @@ export function OrderTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() =>
-                            viewOrderDetails({
-                              ...order,
-                              id: String(order.id),
-                              shipping_price: Number(order.shipping_price),
-                            })
-                          }
+                          onClick={() => {
+                            setIsOpen(true);
+                            // viewOrderDetails({
+                            //   ...order,
+                            //   id: String(order.id),
+                            //   shipping_price: Number(order.shipping_price),
+                            // });
+                          }}
                         >
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
@@ -493,7 +496,7 @@ export function OrderTable() {
               ))}
           </TableBody>
         </Table>
-
+        <OrderDetails setOpen={setIsOpen} open={isOpen} />
         {/* Enhanced Pagination */}
         {data && data?.total_pages > 1 && (
           <EnhancedPagination
