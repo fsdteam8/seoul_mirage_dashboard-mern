@@ -1,12 +1,21 @@
-import { StatCard } from "@/components/stat-card"
-import { CircleDollarSign , ShoppingBag , Users, Archive , Package, Clock, CheckCircle } from "lucide-react" // Changed TrendingUp to BarChart3 for Avg. Order Value
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
-import { SalesOverviewChart } from "@/components/sales-overview-chart"
-import { RevenueTrendChart } from "@/components/revenue-trend-chart"
-import { SalesByCategoryChart } from "@/components/sales-by-category-chart"
+"use client";
+import { StatCard } from "@/components/stat-card";
+import {
+  CircleDollarSign,
+  ShoppingBag,
+  Users,
+  Archive,
+  Package,
+  Clock,
+  CheckCircle,
+} from "lucide-react"; // Changed TrendingUp to BarChart3 for Avg. Order Value
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { SalesOverviewChart } from "@/components/sales-overview-chart";
+import { RevenueTrendChart } from "@/components/revenue-trend-chart";
+import { SalesByCategoryChart } from "@/components/sales-by-category-chart";
 
 const recentOrders = [
   {
@@ -54,7 +63,7 @@ const recentOrders = [
     statusColor: "text-green-600",
     bgColor: "bg-green-100",
   },
-]
+];
 
 const topPerformingProducts = [
   {
@@ -100,18 +109,30 @@ const topPerformingProducts = [
     revenueText: "Revenue",
     image: "/images/dashboardlistImage.png",
   },
-]
+];
 
 export default function DashboardOverviewPage() {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-brand-text-dark">Dashboard Overview</h2>
+      <h2 className="text-2xl font-semibold text-brand-text-dark">
+        Dashboard Overview
+      </h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Revenue" value="$28,450" icon={CircleDollarSign } />
-        <StatCard title="Orders" value="312" icon={ShoppingBag } />
-        <StatCard title="Customers" value="157" icon={Users} description="Active customers" /> {/* Corrected value */}
-        <StatCard title="Avg. Order Value" value="$91.19" icon={Archive } />
+        <StatCard
+          title="Total Revenue"
+          value="$28,450"
+          icon={CircleDollarSign}
+        />
+        <StatCard title="Orders" value="312" icon={ShoppingBag} />
+        <StatCard
+          title="Customers"
+          value="157"
+          icon={Users}
+          description="Active customers"
+        />{" "}
+        {/* Corrected value */}
+        <StatCard title="Avg. Order Value" value="$91.19" icon={Archive} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -123,13 +144,15 @@ export default function DashboardOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[20px] font-semibold leading-[120%]">Recent Orders</CardTitle>
+            <CardTitle className="text-[20px] font-semibold leading-[120%]">
+              Recent Orders
+            </CardTitle>
             {/* View All button is part of CardContent in Figma */}
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-4">
               {recentOrders.map((order) => {
-                const Icon = order.icon
+                const Icon = order.icon;
                 return (
                   <li
                     key={order.id}
@@ -137,11 +160,17 @@ export default function DashboardOverviewPage() {
                   >
                     <Icon className={`h-5 w-5 ${order.statusColor}`} />
                     <div className="flex-1 space-y-3">
-                      <p className="text-base font-semibold text-[#09090B]">{order.id}</p>
-                      <p className="text-[14px] text-[#71717A] font-medium">{order.customer}</p>
+                      <p className="text-base font-semibold text-[#09090B]">
+                        {order.id}
+                      </p>
+                      <p className="text-[14px] text-[#71717A] font-medium">
+                        {order.customer}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-base font-semibold text-[#09090B] leading-[120%] mb-3">{order.amount}</p>
+                      <p className="text-base font-semibold text-[#09090B] leading-[120%] mb-3">
+                        {order.amount}
+                      </p>
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded-full ${order.bgColor} ${order.statusColor}`}
                       >
@@ -149,18 +178,30 @@ export default function DashboardOverviewPage() {
                       </span>
                     </div>
                   </li>
-                )
+                );
               })}
             </ul>
-            <Button variant="outline" size="sm" className="w-full mt-4 h-[45px] text-base font-semibold" asChild>
-              <Link className="text-[#1E2A38] text-base font-semibold leading-[120]" href="/dashboard/orders">View All</Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-4 h-[45px] text-base font-semibold"
+              asChild
+            >
+              <Link
+                className="text-[#1E2A38] text-base font-semibold leading-[120]"
+                href="/dashboard/orders"
+              >
+                View All
+              </Link>
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[20px] font-semibold leading-[120%]">Top Performing Products</CardTitle>
+            <CardTitle className="text-[20px] font-semibold leading-[120%]">
+              Top Performing Products
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-1">
@@ -177,12 +218,20 @@ export default function DashboardOverviewPage() {
                     className="object-cover h-[60px] w-[60px]"
                   />
                   <div className="flex-1">
-                    <p className="text-base font-semibold leading-[120%] text-[#09090B] mb-2">{product.name}</p>
-                    <p className="text-[14px] font-medium text-[#71717A]">{product.unitsSold}</p>
+                    <p className="text-base font-semibold leading-[120%] text-[#09090B] mb-2">
+                      {product.name}
+                    </p>
+                    <p className="text-[14px] font-medium text-[#71717A]">
+                      {product.unitsSold}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-semibold text-[#09090B] mb-2">{product.price}</p>
-                    <p className="text-xs text-[#1E2A38] font-semibold">{product.revenueText}</p>
+                    <p className="text-base font-semibold text-[#09090B] mb-2">
+                      {product.price}
+                    </p>
+                    <p className="text-xs text-[#1E2A38] font-semibold">
+                      {product.revenueText}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -191,5 +240,5 @@ export default function DashboardOverviewPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

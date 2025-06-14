@@ -51,7 +51,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           Dashboard
         </h1>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center cursor-pointer">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3">

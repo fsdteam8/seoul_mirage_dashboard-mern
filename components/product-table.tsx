@@ -60,6 +60,13 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
+interface ProductStatchApiResponse {
+  totalProducts: number;
+  lowStock: number;
+  outOfStock: number;
+  revenue: number;
+}
+
 function EnhancedPagination({
   currentPage,
   totalPages,
@@ -153,7 +160,7 @@ function EnhancedPagination({
 export function ProductTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount] = useState(10);
+  // const [totalCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -199,6 +206,28 @@ export function ProductTable() {
   });
 
   const products: Product[] = data?.data?.data || [];
+
+  const {
+    data: productStats,
+    error: productStatsError,
+    isLoading: productStatsLoading,
+  } = useQuery<ProductStatchApiResponse>({
+    queryKey: ["orderStats", currentPage, searchTerm],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products-stats`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch order");
+      return res.json();
+    },
+  });
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -316,15 +345,15 @@ export function ProductTable() {
     return new Date(dateString).toLocaleDateString();
   };
   // Calculate stats
-  const totalProductsCount = totalCount;
-  const lowStockCount = products.filter((p) => p.status === "low_stock").length;
-  const outOfStockCount = products.filter(
-    (p) => p.status === "out_of_stock"
-  ).length;
-  const totalValue = products.reduce(
-    (sum, p) => sum + Number.parseFloat(p.price) * p.stock_quantity,
-    0
-  );
+  // const totalProductsCount = totalCount;
+  // const lowStockCount = products.filter((p) => p.status === "low_stock").length;
+  // const outOfStockCount = products.filter(
+  //   (p) => p.status === "out_of_stock"
+  // ).length;
+  // const totalValue = products.reduce(
+  //   (sum, p) => sum + Number.parseFloat(p.price) * p.stock_quantity,
+  //   0
+  // );
 
   // Get unique categories for filter
   const categories = Array.from(new Set(products.map((p) => p.category.name)));
@@ -355,26 +384,45 @@ export function ProductTable() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Products"
-          value={String(totalProductsCount)}
-          icon={Package}
-        />
-        <StatCard
-          title="Low Stock"
-          value={String(lowStockCount)}
-          icon={AlertTriangle}
-        />
-        <StatCard
-          title="Out of Stock"
-          value={String(outOfStockCount)}
-          icon={PackageX}
-        />
-        <StatCard
-          title="Total Value"
-          value={`$${totalValue.toLocaleString()}`}
-          icon={TrendingUp}
-        />
+        {productStatsError ? (
+          <div className="md:col-span-2 lg:col-span-4 flex items-start gap-2 p-3 rounded-md bg-red-100 text-red-700 text-sm font-medium">
+            <AlertTriangle className="w-4 h-4 mt-[2px]" />
+            <span>{productStatsError.message}</span>
+          </div>
+        ) : productStatsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-4 border rounded-xl shadow-sm space-y-3 animate-pulse"
+            >
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total Products"
+              value={String(productStats?.totalProducts)}
+              icon={Package}
+            />
+            <StatCard
+              title="Low Stock"
+              value={String(productStats?.lowStock)}
+              icon={AlertTriangle}
+            />
+            <StatCard
+              title="Out of Stock"
+              value={String(productStats?.outOfStock)}
+              icon={PackageX}
+            />
+            <StatCard
+              title="Total Value"
+              value={String(productStats?.revenue)}
+              icon={TrendingUp}
+            />
+          </>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 border border-[#E4E4E7] h-[99px] px-6 rounded-[15px]">
