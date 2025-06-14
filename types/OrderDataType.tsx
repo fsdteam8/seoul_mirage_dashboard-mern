@@ -3,9 +3,8 @@ export interface Promocode {
   name: string;
 }
 
-export interface Order {
+export interface Customer {
   id: number;
-  uniq_id: string;
   full_name: string;
   last_name: string;
   email: string;
@@ -15,9 +14,16 @@ export interface Order {
   state: string;
   postal_code: string;
   country: string;
-  items:string
-  type: string;
+  created_at: string;
+  updated_at: string;
+}
 
+export interface Order {
+  id: number;
+  uniq_id: string;
+  customer_id: number;
+  type: string;
+  items: number;
   status: string;
   shipping_method: string;
   shipping_price: string;
@@ -29,6 +35,7 @@ export interface Order {
   created_at: string;
   updated_at: string;
   promocode: Promocode;
+  customer: Customer;
 }
 
 export interface PaginationLink {
