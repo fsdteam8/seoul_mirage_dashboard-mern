@@ -60,7 +60,7 @@ export default function LoginPage() {
 }, 100); // 100ms delay
       toast({
         title: "Login Successful",
-        description: "xxxYou have successfully logged in.",
+        description: "You have successfully logged in.",
         variant: "default",
       });
 
