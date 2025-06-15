@@ -198,7 +198,7 @@ export function OrderTable() {
       return res.json();
     },
   });
-  
+
   const orderData = data?.data;
 
   const {
@@ -246,7 +246,7 @@ export function OrderTable() {
 
   const getPaymentBadgeVariant = (status: string) => {
     if (status === "Paid") return "default"; // Greenish
-    if (status === "Pending") return "secondary"; // Yellowish
+    if (status === "pending") return "secondary"; // Yellowish
     if (status === "Failed") return "destructive"; // Reddish
     return "outline";
   };
@@ -282,22 +282,22 @@ export function OrderTable() {
           <>
             <StatCard
               title="Total Orders"
-              value={String(orderStats?.totalOrders)}
+              value={String(orderStats?.totalOrders ?? "")}
               icon={PackageCheck}
             />
             <StatCard
               title="Processing"
-              value={String(orderStats?.processing)}
+              value={String(orderStats?.processing ?? "")}
               icon={Clock}
             />
             <StatCard
               title="Pending Payments"
-              value={String(orderStats?.pendingPayments)}
+              value={String(orderStats?.pendingPayments ?? "")}
               icon={AlertCircle}
             />
             <StatCard
               title="Revenue"
-              value={String(orderStats?.revenue)}
+              value={String(orderStats?.revenue ?? "")}
               icon={DollarSign}
             />
           </>
@@ -408,45 +408,47 @@ export function OrderTable() {
               orderData &&
               orderData.data?.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell className="font-medium">{order.uniq_id}</TableCell>
-                  <TableCell>{order.customer.full_name}</TableCell>
-                  <TableCell>{order.customer.email}</TableCell>
-                  <TableCell>{order.created_at}</TableCell>
-                  <TableCell>{order.items}item(s)</TableCell>
-                  <TableCell>${order.shipping_price}</TableCell>
+                  <TableCell className="font-medium">{order?.id}</TableCell>
+                  <TableCell className="font-medium">
+                    {order?.uniq_id}
+                  </TableCell>
+                  <TableCell>{order?.customer?.full_name}</TableCell>
+                  <TableCell>{order?.customer?.email}</TableCell>
+                  <TableCell>{order?.created_at}</TableCell>
+                  <TableCell>{order?.items}item(s)</TableCell>
+                  <TableCell>${order?.shipping_price}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={getPaymentBadgeVariant(order.payment_status)}
+                      variant={getPaymentBadgeVariant(order?.payment_status)}
                       className={
-                        order.payment_method === "paid"
+                        order?.payment_method === "paid"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : order.payment_status === "pending"
+                          : order?.payment_status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order.payment_status === "failed"
+                          : order?.payment_status === "failed"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
                     >
-                      {order.payment_status}
+                      {order?.payment_status}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={getFulfillmentBadgeVariant(order.status)}
+                      variant={getFulfillmentBadgeVariant(order?.status)}
                       className={
-                        order.status === "Delivered"
+                        order?.status === "Delivered"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : order.status === "Shipped"
+                          : order?.status === "Shipped"
                           ? "bg-blue-100 text-blue-700 border-blue-200"
-                          : order.status === "Processing"
+                          : order?.status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order.status === "Cancelled"
+                          : order?.status === "Cancelled"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
                     >
-                      {order.status}
+                      {order?.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -460,7 +462,7 @@ export function OrderTable() {
                         <DropdownMenuItem
                           onClick={() => {
                             setIsOpen(true);
-                            setSingelOrder(order.uniq_id);
+                            setSingelOrder(order?.uniq_id);
                             // viewOrderDetails({
                             //   ...order,
                             //   id: String(order.id),

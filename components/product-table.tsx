@@ -403,7 +403,7 @@ export function ProductTable() {
           <>
             <StatCard
               title="Total Products"
-              value={String(productStats?.totalProducts)}
+              value={String(productStats?.totalProducts ?? "")}
               icon={Package}
             />
             <StatCard
