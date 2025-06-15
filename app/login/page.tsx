@@ -54,12 +54,16 @@ export default function LoginPage() {
         return;
       }
 
+      // add rotue push 
+      setTimeout(() => {
+  router.push("/dashboard");
+}, 100); // 100ms delay
       toast({
         title: "Login Successful",
         description: "You have successfully logged in.",
         variant: "default",
       });
-      router.push("/dashboard");
+
     } catch {
       toast({
         title: "Login Failed",
