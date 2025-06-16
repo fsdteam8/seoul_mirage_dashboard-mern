@@ -246,7 +246,7 @@ export function OrderTable() {
 
   const getPaymentBadgeVariant = (status: string) => {
     if (status === "Paid") return "default"; // Greenish
-    if (status === "Pending") return "secondary"; // Yellowish
+    if (status === "pending") return "secondary"; // Yellowish
     if (status === "Failed") return "destructive"; // Reddish
     return "outline";
   };
@@ -486,7 +486,7 @@ export function OrderTable() {
                         <DropdownMenuItem
                           onClick={() => {
                             setIsOpen(true);
-                            setSingelOrder(order.uniq_id);
+                            setSingelOrder(order?.uniq_id);
                             // viewOrderDetails({
                             //   ...order,
                             //   id: String(order.id),

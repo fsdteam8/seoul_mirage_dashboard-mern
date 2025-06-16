@@ -5,13 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const session = useSession();
-  const token = session?.data?.accessToken ?? {};
-
+  const { data: session, status } = useSession();
   const router = useRouter();
+
   useEffect(() => {
-    router.push("/dashboard");
-  }, [router, token]);
+    if (status === "authenticated") {
+      if (session?.user?.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/unauthorized");
+      }
+    }
+  }, [status, session, router]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-brand-bg-light">

@@ -1,13 +1,12 @@
 export type Category = {
-  id: string;
+  id: number; // updated from string to number
   name: string;
   description: string;
   type: string;
+  image: string; // required now
   created_at: string;
   updated_at: string;
-  imageUrl?: string;
-  productCount?: number;
-  image?: string;
+  // removed productCount as it's not in new data
 };
 
 export type PaginationLink = {

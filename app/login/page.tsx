@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -44,6 +44,7 @@ export default function LoginPage() {
         email: data.email,
         password: data.password,
         redirect: false,
+        callbackUrl:"/dashboard"
       });
       if (!res?.ok) {
         toast({
@@ -55,9 +56,8 @@ export default function LoginPage() {
       }
 
       // add rotue push 
-      setTimeout(() => {
-  router.push("/dashboard");
-}, 100); // 100ms delay
+          
+      window.location.href = res.url || "/dashboard";
       toast({
         title: "Login Successful",
         description: "You have successfully logged in.",

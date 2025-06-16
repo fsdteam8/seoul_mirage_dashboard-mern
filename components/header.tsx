@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, UserCircle } from "lucide-react";
+import { Menu, UserCircle, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,19 +13,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Settings, LogOut } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
+interface UserToken {
+  name?: string;
+  email?: string;
+  image?: string;
+}
+
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const session = useSession();
-  const token = session?.data?.user ?? {};
-  console.log(token);
+  const { data: session } = useSession();
+  const token = session?.user as UserToken | undefined;
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -51,42 +55,44 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           Dashboard
         </h1>
       </div>
+
       <div className="flex items-center cursor-pointer">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3">
-              <div>
-                <Button
-                  variant="ghost"
-                  className="relative h-10 w-10 rounded-full"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage
-                      src="/placeholder.svg?height=40&width=40"
-                      alt="User avatar"
-                    />
-                    <AvatarFallback>
-                      <UserCircle className="h-8 w-8 text-black" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </div>
-              <div className="flex flex-col space-y-1">
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full"
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={token?.image || "/placeholder.svg?height=40&width=40"}
+                    alt="User avatar"
+                  />
+                  <AvatarFallback>
+                    <UserCircle className="h-8 w-8 text-black" />
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+              <div className="flex flex-col space-y-1 text-left">
                 <p className="text-[16px] text-[#000000] font-medium leading-[120%]">
-                  {"name" in token && token.name ? token.name : "Admin Name"}
+                  {token?.name || "Admin Name"}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {"email" in token && token.email ? token.email : "admin@example.com"}
+                  {token?.email || "admin@example.com"}
                 </p>
               </div>
             </div>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">  {"name" in token && token.name ? token.name : "Admin Name"}</p>
+                <p className="text-sm font-medium leading-none">
+                  {token?.name || "Admin Name"}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {"email" in token && token.email ? token.email : "admin@example.com"}
+                  {token?.email || "admin@example.com"}
                 </p>
               </div>
             </DropdownMenuLabel>

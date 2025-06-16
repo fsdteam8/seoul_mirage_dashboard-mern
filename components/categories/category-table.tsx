@@ -322,7 +322,7 @@ export function CategoryTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDeleteClick(category.id)}
+                          onClick={() => handleDeleteClick(String(category.id))}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
