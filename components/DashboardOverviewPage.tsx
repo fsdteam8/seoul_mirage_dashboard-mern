@@ -1,4 +1,5 @@
 "use client";
+
 import { StatCard } from "@/components/stat-card";
 import {
   CircleDollarSign,
@@ -8,7 +9,7 @@ import {
   Package,
   Clock,
   CheckCircle,
-} from "lucide-react"; // Changed TrendingUp to BarChart3 for Avg. Order Value
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -16,20 +17,76 @@ import Image from "next/image";
 import { SalesOverviewChart } from "@/components/sales-overview-chart";
 import { RevenueTrendChart } from "@/components/revenue-trend-chart";
 import { SalesByCategoryChart } from "@/components/sales-by-category-chart";
+import { useQuery } from "@tanstack/react-query";
+
+// Define the API response types
+interface Media {
+  id: number;
+  product_id: number;
+  file_path: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  image: string | null;
+  price: string;
+  category_id: number;
+  status: string;
+  cost_price: string;
+  stock_quantity: number;
+  sales: number;
+  created_at: string;
+  updated_at: string;
+  orders_count: number;
+  category: Category;
+  media: Media[];
+}
+
+interface ProductApiResponse {
+  success: boolean;
+  data: {
+    current_page: number;
+    data: Product[];
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: { url: string | null; label: string; active: boolean }[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+  };
+  current_page: number;
+  total_pages: number;
+  per_page: number;
+  total: number;
+}
 
 const recentOrders = [
   {
     id: "ORD-12345",
     customer: "Sarah Johnson",
-    amount: "$1,999.00", // Figma shows +$1,999.00, keeping it simple
+    amount: "$1,999.00",
     status: "Processing",
     icon: Clock,
-    statusColor: "text-yellow-600", // More specific colors
+    statusColor: "text-yellow-600",
     bgColor: "bg-yellow-100",
   },
   {
-    id: "ORD-12345", // Figma shows duplicate ID, let's make it unique for key prop
-    customer: "Sarah Johnson", // Figma shows duplicate customer, let's vary
+    id: "ORD-12346", // Fixed duplicate ID
+    customer: "John Smith", // Varied customer name
     amount: "$1,999.00",
     status: "Shipped",
     icon: Package,
@@ -65,58 +122,47 @@ const recentOrders = [
   },
 ];
 
-const topPerformingProducts = [
-  {
-    name: "Hydrating Essence",
-    unitsSold: "1250 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue", // Changed from 'revenue' to avoid conflict if it were a number
-    image: "/images/dashboardlistImage.png",
-  },
-  {
-    name: "Brightening Serum",
-    unitsSold: "980 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue",
-    image: "/images/dashboardlistImage.png",
-  },
-  {
-    name: "Nourishing Cream",
-    unitsSold: "875 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue",
-    image: "/images/dashboardlistImage.png",
-  },
-  {
-    // Added more to fill space as per Figma
-    name: "Nourishing Cream", // Duplicate name from Figma
-    unitsSold: "875 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue",
-    image: "/images/dashboardlistImage.png",
-  },
-  {
-    name: "Hydrating Essence", // Duplicate name from Figma
-    unitsSold: "1250 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue",
-    image: "/images/dashboardlistImage.png",
-  },
-  {
-    name: "Brightening Serum", // Duplicate name from Figma
-    unitsSold: "980 units sold",
-    price: "$1,999.00",
-    revenueText: "Revenue",
-    image: "/images/dashboardlistImage.png",
-  },
-];
-
 export default function DashboardOverviewPage() {
+  const { data, error, isLoading } = useQuery<ProductApiResponse>({
+    queryKey: ["TopProducts"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/best-selling-products`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      return res.json();
+    },
+  });
+
+  // Map API data to the expected structure
+  const topProducts = (data?.data?.data ?? []).map((product) => ({
+    id: product.id,
+    name: product.name,
+    unitsSold: `${product.stock_quantity} Stock Quantity`,
+    price: `$${parseFloat(product.price).toFixed(2)}`,
+    sales: `${product.sales} Sales`, // Fallback since API doesn't provide this
+    image: product.media[0]
+      ? `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0].file_path}`
+      : "/placeholder.svg",
+  }));
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-brand-text-dark">
         Dashboard Overview
       </h2>
+
+      {/* Handle loading and error states */}
+      {isLoading && (
+        <div className="text-center text-gray-600">Loading products...</div>
+      )}
+      {error && (
+        <div className="text-center text-red-600">
+          Error loading products: {error.message}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -130,8 +176,7 @@ export default function DashboardOverviewPage() {
           value="157"
           icon={Users}
           description="Active customers"
-        />{" "}
-        {/* Corrected value */}
+        />
         <StatCard title="Avg. Order Value" value="$91.19" icon={Archive} />
       </div>
 
@@ -147,7 +192,6 @@ export default function DashboardOverviewPage() {
             <CardTitle className="text-[20px] font-semibold leading-[120%]">
               Recent Orders
             </CardTitle>
-            {/* View All button is part of CardContent in Figma */}
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-4">
@@ -156,7 +200,7 @@ export default function DashboardOverviewPage() {
                 return (
                   <li
                     key={order.id}
-                    className="flex items-center space-x-3 py-2 "
+                    className="flex items-center space-x-3 py-2"
                   >
                     <Icon className={`h-5 w-5 ${order.statusColor}`} />
                     <div className="flex-1 space-y-3">
@@ -205,36 +249,42 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-1">
-              {topPerformingProducts.map((product, index) => (
-                <li
-                  key={`${product.name}-${index}`}
-                  className="flex items-center space-x-3 py-2.5 border-b border-gray-100 last:border-b-0"
-                >
-                  <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    width={100} // Figma shows smaller images here
-                    height={100}
-                    className="object-cover h-[60px] w-[60px]"
-                  />
-                  <div className="flex-1">
-                    <p className="text-base font-semibold leading-[120%] text-[#09090B] mb-2">
-                      {product.name}
-                    </p>
-                    <p className="text-[14px] font-medium text-[#71717A]">
-                      {product.unitsSold}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-base font-semibold text-[#09090B] mb-2">
-                      {product.price}
-                    </p>
-                    <p className="text-xs text-[#1E2A38] font-semibold">
-                      {product.revenueText}
-                    </p>
-                  </div>
+              {topProducts.length > 0 ? (
+                topProducts.map((product, index) => (
+                  <li
+                    key={`${product.name}-${product.id}-${index}`} // Use product.id for uniqueness
+                    className="flex items-center space-x-3 py-2.5 border-b border-gray-100 last:border-b-0"
+                  >
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      width={60}
+                      height={60}
+                      className="object-cover h-[60px] w-[60px]"
+                    />
+                    <div className="flex-1">
+                      <p className="text-base font-semibold leading-[120%] text-[#09090B] mb-2">
+                        {product.name}
+                      </p>
+                      <p className="text-[14px] font-medium text-[#71717A]">
+                        {product.unitsSold}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-semibold text-[#09090B] mb-2">
+                        {product.price}
+                      </p>
+                      <p className="text-xs text-[#1E2A38] font-semibold">
+                        {product.sales}
+                      </p>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="text-center text-gray-600">
+                  No top products available
                 </li>
-              ))}
+              )}
             </ul>
           </CardContent>
         </Card>
