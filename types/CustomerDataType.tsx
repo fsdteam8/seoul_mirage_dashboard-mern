@@ -11,6 +11,7 @@ export interface Customer {
   country: string;
   created_at: string;
   updated_at: string;
+  orders_count:string
 }
 
 export interface PaginationLink {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-// import type { Category } from "@/app/dashboard/categories/types";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Category } from "@/types/CategoryDataType";
@@ -31,7 +30,7 @@ import {
   SelectValue,
 } from "../ui/select";
 
-// Zod schema (no need for image validation now)
+// Zod schema (removed imageUrl and imageFile from form schema)
 const categorySchema = z.object({
   name: z
     .string()
@@ -42,12 +41,9 @@ const categorySchema = z.object({
     .min(2, "Category type must be at least 2 characters")
     .max(50),
   description: z.string().max(200).optional(),
-  imageUrl: z.string().url().optional(), // For preview only
 });
 
-type CategoryFormValues = z.infer<typeof categorySchema> & {
-  imageFile?: File; // for FormData
-};
+type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface AddCategorySheetProps {
   isOpen: boolean;
@@ -62,6 +58,11 @@ export function AddCategorySheet({
 }: AddCategorySheetProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const token = session?.accessToken;
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -69,12 +70,8 @@ export function AddCategorySheet({
       name: "",
       type: "",
       description: "",
-      imageUrl: "",
-      imageFile: undefined,
     },
   });
-  const session = useSession();
-  const token = session?.data?.accessToken ?? {};
 
   useEffect(() => {
     if (isOpen) {
@@ -83,11 +80,21 @@ export function AddCategorySheet({
           name: categoryToEdit.name,
           type: categoryToEdit.type || "",
           description: categoryToEdit.description || "",
-          imageUrl: categoryToEdit.imageUrl || "",
-          imageFile: undefined,
         });
+        setImageUrl(
+          categoryToEdit.image
+            ? `${process.env.NEXT_PUBLIC_API_URL}/${categoryToEdit.image}`
+            : ""
+        );
+        setImageFile(null);
       } else {
-        form.reset();
+        form.reset({
+          name: "",
+          type: "",
+          description: "",
+        });
+        setImageUrl("");
+        setImageFile(null);
       }
     }
   }, [isOpen, categoryToEdit, form]);
@@ -98,7 +105,7 @@ export function AddCategorySheet({
       formData.append("name", data.name);
       formData.append("type", data.type);
       if (data.description) formData.append("description", data.description);
-      if (data.imageFile) formData.append("image", data.imageFile);
+      if (imageFile) formData.append("image", imageFile);
 
       const res = await fetch(
         categoryToEdit
@@ -107,7 +114,6 @@ export function AddCategorySheet({
         {
           method: "POST",
           headers: {
-            Accept: "multipart/form-data",
             ...(token && { Authorization: `Bearer ${token}` }),
           },
           body: formData,
@@ -121,11 +127,13 @@ export function AddCategorySheet({
     onSuccess: (data) => {
       toast({
         title: categoryToEdit ? "Category Updated" : "Category Added",
-        description: data.message,
+        description: data.message || "Category saved successfully",
       });
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       form.reset();
+      setImageFile(null);
+      setImageUrl("");
     },
     onError: (error) => {
       toast({
@@ -145,7 +153,11 @@ export function AddCategorySheet({
       open={isOpen}
       onOpenChange={(open) => {
         onOpenChange(open);
-        if (!open) form.reset();
+        if (!open) {
+          form.reset();
+          setImageFile(null);
+          setImageUrl("");
+        }
       }}
     >
       <SheetContent className="sm:max-w-md w-[90vw] overflow-y-auto">
@@ -185,7 +197,6 @@ export function AddCategorySheet({
               <SelectContent>
                 <SelectItem value="Skincare">Skincare</SelectItem>
                 <SelectItem value="Collections">Collections</SelectItem>
-                {/* <SelectItem value="digital">Digital</SelectItem> */}
               </SelectContent>
             </Select>
             {form.formState.errors.type && (
@@ -222,20 +233,31 @@ export function AddCategorySheet({
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  form.setValue("imageFile", file);
+                  setImageFile(file);
                   const previewUrl = URL.createObjectURL(file);
-                  form.setValue("imageUrl", previewUrl);
+                  setImageUrl(previewUrl);
+                } else {
+                  setImageFile(null);
+                  if (categoryToEdit?.image) {
+                    setImageUrl(
+                      `${process.env.NEXT_PUBLIC_API_URL}/${categoryToEdit.image}`
+                    );
+                  } else {
+                    setImageUrl("");
+                  }
                 }
               }}
             />
-            {form.watch("imageUrl") && (
-              <Image
-                width={100}
-                height={100}
-                src={form.watch("imageUrl") || ""}
-                alt="Preview"
-                className="mt-3 max-h-32 rounded"
-              />
+            {imageUrl && (
+              <div className="mt-3">
+                <Image
+                  width={100}
+                  height={100}
+                  src={imageUrl}
+                  alt="Category preview"
+                  className="max-h-32 rounded"
+                />
+              </div>
             )}
           </div>
 

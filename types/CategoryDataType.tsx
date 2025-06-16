@@ -5,8 +5,9 @@ export type Category = {
   type: string;
   created_at: string;
   updated_at: string;
-  imageUrl?:string
-  productCount?:number
+  imageUrl?: string;
+  productCount?: number;
+  image?: string;
 };
 
 export type PaginationLink = {

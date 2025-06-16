@@ -18,8 +18,10 @@ import { SalesOverviewChart } from "@/components/sales-overview-chart";
 import { RevenueTrendChart } from "@/components/revenue-trend-chart";
 import { SalesByCategoryChart } from "@/components/sales-by-category-chart";
 import { useQuery } from "@tanstack/react-query";
+import { OrdersResponse } from "@/types/RecentOrderDataType";
+import { useSession } from "next-auth/react";
+import { SalesReportApiResponse } from "@/types/DashboardDataType";
 
-// Define the API response types
 interface Media {
   id: number;
   product_id: number;
@@ -74,79 +76,108 @@ interface ProductApiResponse {
   total: number;
 }
 
-const recentOrders = [
-  {
-    id: "ORD-12345",
-    customer: "Sarah Johnson",
-    amount: "$1,999.00",
-    status: "Processing",
-    icon: Clock,
-    statusColor: "text-yellow-600",
-    bgColor: "bg-yellow-100",
-  },
-  {
-    id: "ORD-12346", // Fixed duplicate ID
-    customer: "John Smith", // Varied customer name
-    amount: "$1,999.00",
-    status: "Shipped",
-    icon: Package,
-    statusColor: "text-blue-600",
-    bgColor: "bg-blue-100",
-  },
-  {
-    id: "ORD-12347",
-    customer: "Sarah Johnson",
-    amount: "$1,999.00",
-    status: "Processing",
-    icon: Clock,
-    statusColor: "text-yellow-600",
-    bgColor: "bg-yellow-100",
-  },
-  {
-    id: "ORD-12348",
-    customer: "Sarah Johnson",
-    amount: "$1,999.00",
-    status: "Delivered",
-    icon: CheckCircle,
-    statusColor: "text-green-600",
-    bgColor: "bg-green-100",
-  },
-  {
-    id: "ORD-12349",
-    customer: "Sarah Johnson",
-    amount: "$1,999.00",
-    status: "Delivered",
-    icon: CheckCircle,
-    statusColor: "text-green-600",
-    bgColor: "bg-green-100",
-  },
-];
-
 export default function DashboardOverviewPage() {
+  const { data: session } = useSession();
+  const token = session?.accessToken ?? "";
+
   const { data, error, isLoading } = useQuery<ProductApiResponse>({
     queryKey: ["TopProducts"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/best-selling-products`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/best-selling-products?paginate_count=5`
       );
-      if (!res.ok) {
-        throw new Error("Failed to fetch products");
-      }
+      if (!res.ok) throw new Error("Failed to fetch products");
       return res.json();
     },
   });
 
-  // Map API data to the expected structure
+  const {
+    data: statch,
+    error: statchError,
+    isLoading: statchLoading,
+  } = useQuery<SalesReportApiResponse>({
+    queryKey: ["dashboardOverview"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch products");
+      return res.json();
+    },
+  });
+
+  const {
+    data: rcnOrder,
+    error: rcnError,
+    isLoading: rcnLoading,
+  } = useQuery<OrdersResponse>({
+    queryKey: ["recentOrder"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders?paginate_count=5`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      return res.json();
+    },
+  });
+
   const topProducts = (data?.data?.data ?? []).map((product) => ({
     id: product.id,
     name: product.name,
     unitsSold: `${product.stock_quantity} Stock Quantity`,
     price: `$${parseFloat(product.price).toFixed(2)}`,
-    sales: `${product.sales} Sales`, // Fallback since API doesn't provide this
+    sales: `${product.sales} Sales`,
     image: product.media[0]
       ? `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0].file_path}`
       : "/placeholder.svg",
   }));
+
+  const recentOrders = (rcnOrder?.data?.data ?? []).map((order) => {
+    let icon, statusColor, bgColor;
+    switch (order.status.toLowerCase()) {
+      case "pending":
+        icon = Clock;
+        statusColor = "text-yellow-600";
+        bgColor = "bg-yellow-100";
+        break;
+      case "shipped":
+        icon = Package;
+        statusColor = "text-blue-600";
+        bgColor = "bg-blue-100";
+        break;
+      case "delivered":
+        icon = CheckCircle;
+        statusColor = "text-green-600";
+        bgColor = "bg-green-100";
+        break;
+      default:
+        icon = Clock;
+        statusColor = "text-gray-600";
+        bgColor = "bg-gray-100";
+    }
+
+    return {
+      id: order.uniq_id,
+      customer: `${order.customer.full_name} ${order.customer.last_name}`,
+      amount: `$${parseFloat(order.total).toFixed(2)}`,
+      status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+      icon,
+      statusColor,
+      bgColor,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -154,30 +185,53 @@ export default function DashboardOverviewPage() {
         Dashboard Overview
       </h2>
 
-      {/* Handle loading and error states */}
-      {isLoading && (
-        <div className="text-center text-gray-600">Loading products...</div>
-      )}
-      {error && (
-        <div className="text-center text-red-600">
-          Error loading products: {error.message}
-        </div>
-      )}
-
+      {/* ✅ Stat Cards with Loading and Error Handling */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
-          value="$28,450"
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : `$${statch?.revenue ?? 0}`
+          }
           icon={CircleDollarSign}
         />
-        <StatCard title="Orders" value="312" icon={ShoppingBag} />
+        <StatCard
+          title="Orders"
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : String(statch?.totalOrders ?? 0)
+          }
+          icon={ShoppingBag}
+        />
         <StatCard
           title="Customers"
-          value="157"
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : String(statch?.customerCount ?? 0)
+          }
           icon={Users}
           description="Active customers"
         />
-        <StatCard title="Avg. Order Value" value="$91.19" icon={Archive} />
+        <StatCard
+          title="Avg. Order Value"
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : `$${statch?.averageOrderValue ?? 0}`
+          }
+          icon={Archive}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -187,6 +241,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Orders */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-[20px] font-semibold leading-[120%]">
@@ -195,35 +250,59 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-4">
-              {recentOrders.map((order) => {
-                const Icon = order.icon;
-                return (
-                  <li
-                    key={order.id}
-                    className="flex items-center space-x-3 py-2"
-                  >
-                    <Icon className={`h-5 w-5 ${order.statusColor}`} />
-                    <div className="flex-1 space-y-3">
-                      <p className="text-base font-semibold text-[#09090B]">
-                        {order.id}
-                      </p>
-                      <p className="text-[14px] text-[#71717A] font-medium">
-                        {order.customer}
-                      </p>
+              {rcnLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i} className="flex items-center space-x-3 py-2">
+                    <div className="h-5 w-5 bg-gray-200 rounded-full animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
                     </div>
-                    <div className="text-right">
-                      <p className="text-base font-semibold text-[#09090B] leading-[120%] mb-3">
-                        {order.amount}
-                      </p>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${order.bgColor} ${order.statusColor}`}
-                      >
-                        {order.status}
-                      </span>
+                    <div className="text-right space-y-2">
+                      <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-5 w-16 bg-gray-200 rounded-full animate-pulse" />
                     </div>
                   </li>
-                );
-              })}
+                ))
+              ) : rcnError ? (
+                <li className="text-center text-red-600">
+                  Error loading orders: {rcnError.message}
+                </li>
+              ) : recentOrders.length > 0 ? (
+                recentOrders.map((order) => {
+                  const Icon = order.icon;
+                  return (
+                    <li
+                      key={order.id}
+                      className="flex items-center space-x-3 py-2"
+                    >
+                      <Icon className={`h-5 w-5 ${order.statusColor}`} />
+                      <div className="flex-1 space-y-3">
+                        <p className="text-base font-semibold text-[#09090B]">
+                          {order.id}
+                        </p>
+                        <p className="text-[14px] text-[#71717A] font-medium">
+                          {order.customer}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-base font-semibold text-[#09090B] mb-3">
+                          {order.amount}
+                        </p>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${order.bgColor} ${order.statusColor}`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })
+              ) : (
+                <li className="text-center text-gray-600">
+                  No recent orders available
+                </li>
+              )}
             </ul>
             <Button
               variant="outline"
@@ -231,16 +310,12 @@ export default function DashboardOverviewPage() {
               className="w-full mt-4 h-[45px] text-base font-semibold"
               asChild
             >
-              <Link
-                className="text-[#1E2A38] text-base font-semibold leading-[120]"
-                href="/dashboard/orders"
-              >
-                View All
-              </Link>
+              <Link href="/dashboard/orders">View All</Link>
             </Button>
           </CardContent>
         </Card>
 
+        {/* Top Products */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-[20px] font-semibold leading-[120%]">
@@ -249,10 +324,31 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <ul className="space-y-1">
-              {topProducts.length > 0 ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center space-x-3 py-2.5 border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="h-[60px] w-[60px] bg-gray-200 rounded animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-10 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </li>
+                ))
+              ) : error ? (
+                <li className="text-center text-red-600">
+                  Error loading products: {error.message}
+                </li>
+              ) : topProducts.length > 0 ? (
                 topProducts.map((product, index) => (
                   <li
-                    key={`${product.name}-${product.id}-${index}`} // Use product.id for uniqueness
+                    key={`${product.name}-${product.id}-${index}`}
                     className="flex items-center space-x-3 py-2.5 border-b border-gray-100 last:border-b-0"
                   >
                     <Image

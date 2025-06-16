@@ -231,7 +231,7 @@ export function ProductTable() {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1);
+    // setCurrentPage(1);
   };
 
   const handleCategoryChange = (value: string) => {
@@ -403,22 +403,46 @@ export function ProductTable() {
           <>
             <StatCard
               title="Total Products"
-              value={String(productStats?.totalProducts)}
+              value={
+                productStatsLoading
+                  ? "Loading..."
+                  : productStatsError
+                  ? "N/A"
+                  : String(productStats?.totalProducts ?? 0)
+              }
               icon={Package}
             />
             <StatCard
               title="Low Stock"
-              value={String(productStats?.lowStock)}
+              value={
+                productStatsLoading
+                  ? "Loading..."
+                  : productStatsError
+                  ? "N/A"
+                  : String(productStats?.lowStock ?? 0)
+              }
               icon={AlertTriangle}
             />
             <StatCard
               title="Out of Stock"
-              value={String(productStats?.outOfStock)}
+              value={
+                productStatsLoading
+                  ? "Loading..."
+                  : productStatsError
+                  ? "N/A"
+                  : String(productStats?.outOfStock ?? 0)
+              }
               icon={PackageX}
             />
             <StatCard
               title="Total Value"
-              value={String(productStats?.revenue)}
+              value={
+                productStatsLoading
+                  ? "Loading..."
+                  : productStatsError
+                  ? "N/A"
+                  : String(productStats?.revenue ?? 0)
+              }
               icon={TrendingUp}
             />
           </>
