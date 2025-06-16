@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import // DropdownMenu,
@@ -31,7 +30,6 @@ import {
   Search,
   Users,
   UserPlus,
-  UserX,
   DollarSign,
   // Eye,
   // Edit3,
@@ -40,7 +38,6 @@ import {
 } from "lucide-react";
 import {
   // type Customer,
-  type CustomerStatus,
   // mockCustomers,
   customerStatuses,
 } from "@/app/dashboard/customers/types";
@@ -186,6 +183,23 @@ export function CustomerTable() {
     },
   });
 
+  const {
+    data: statch,
+    error: statchError,
+    isLoading: statchLoading,
+  } = useQuery({
+    queryKey: ["coustomerStats"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/customers-stats`
+      );
+      if (!res.ok) throw new Error("Failed to fetch products");
+      return res.json();
+    },
+  });
+
+  console.log(statch);
+
   const customerData = data?.data;
 
   // const filteredAndSortedCustomers = useMemo(() => {
@@ -252,26 +266,9 @@ export function CustomerTable() {
   //   });
   // };
 
-  const getStatusBadgeVariant = (status: CustomerStatus) => {
-    return status === "Active" ? "default" : "secondary"; // Active: Greenish, Inactive: Yellowish/Grayish
-  };
-
-  // Stats
-  // const totalCustomersCount = allCustomers.length;
-  // // For "New Customers", we'd need a "joinDate" or similar. Let's simulate.
-  // const newCustomersCount = allCustomers.filter(
-  //   (c) =>
-  //     new Date(c.lastActive) >
-  //     new Date(new Date().setMonth(new Date().getMonth() - 1))
-  // ).length;
-  // const inactiveCount = allCustomers.filter(
-  //   (c) => c.status === "Inactive"
-  // ).length;
-  // const avgOrderValue =
-  //   allCustomers.length > 0
-  //     ? allCustomers.reduce((sum, c) => sum + c.totalSpent, 0) /
-  //       allCustomers.reduce((sum, c) => sum + c.orderCount, 0)
-  //     : 0;
+  // const getStatusBadgeVariant = (status: CustomerStatus) => {
+  //   return status === "Active" ? "default" : "secondary"; // Active: Greenish, Inactive: Yellowish/Grayish
+  // };
 
   return (
     <div className="space-y-6">
@@ -279,16 +276,38 @@ export function CustomerTable() {
         Manage Customers
       </h2>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Customers" value={String(10)} icon={Users} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StatCard title="Total Customers"   value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : String(statch?.totalCustomers ?? 0)
+          } icon={Users} />
         <StatCard
           title="New Customers"
-          value={String(20)}
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : String(statch?.new_customers ?? 0)
+          }
           icon={UserPlus}
           description="(Last 30 days)"
         />
-        <StatCard title="Inactive" value={String(20)} icon={UserX} />
-        <StatCard title="Avg. Order Value" value={`{30}`} icon={DollarSign} />
+        {/* <StatCard title="Inactive" value={String(statch?.new_customers)} icon={UserX} /> */}
+        <StatCard
+          title="Avg. Order Value"
+          value={
+            statchLoading
+              ? "Loading..."
+              : statchError
+              ? "N/A"
+              : String(statch?.averageOrderValue ?? 0)
+          }
+          icon={DollarSign}
+        />
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 border p-6 rounded-[15px]">
@@ -334,7 +353,7 @@ export function CustomerTable() {
               <TableHead>Country</TableHead>
               <TableHead>Total Spent</TableHead>
               {/* <TableHead>Last Active</TableHead> */}
-              <TableHead>Status</TableHead>
+              {/* <TableHead>Status</TableHead> */}
               {/* <TableHead>Action</TableHead> */}
             </TableRow>
           </TableHeader>
@@ -400,7 +419,9 @@ export function CustomerTable() {
                 </TableCell>
                 <TableCell>{customer.email}</TableCell>
                 <TableCell>{customer.phone}</TableCell>
-                <TableCell className="text-center">${10}</TableCell>
+                <TableCell className="text-center">
+                  {customer.orders_count}
+                </TableCell>
                 <TableCell>{customer.full_address}</TableCell>
                 <TableCell>{customer.city}</TableCell>
                 <TableCell>{customer.state}</TableCell>
@@ -409,7 +430,7 @@ export function CustomerTable() {
                 </TableCell>
                 <TableCell>{customer.country}</TableCell>
                 <TableCell className="text-center">{10}</TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <Badge
                     variant={getStatusBadgeVariant("Active")}
                     className={
@@ -420,7 +441,7 @@ export function CustomerTable() {
                   >
                     {"Active"}
                   </Badge>
-                </TableCell>
+                </TableCell> */}
                 {/* <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

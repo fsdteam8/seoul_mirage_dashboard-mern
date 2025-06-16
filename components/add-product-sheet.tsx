@@ -60,7 +60,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   vendor: z.string().optional(),
-  status: z.enum(["active", "inactive", "draft"]),
+  // status: z.enum(["active", "inactive", "draft"]),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -120,7 +120,7 @@ export function AddProductSheet({
       price: 0,
       stock_quantity: 0,
       description: "",
-      status: "active",
+      // status: "active",
     },
   });
 
@@ -143,7 +143,7 @@ export function AddProductSheet({
               : productToEdit.cost_price ?? undefined,
           stock_quantity: productToEdit.stock_quantity || 0,
           description: productToEdit.description || "",
-          status: (productToEdit.status || "active") as ProductStatus,
+          // status: (productToEdit.status || "active") as ProductStatus,
         };
         form.reset(defaultValues);
 
@@ -249,7 +249,7 @@ export function AddProductSheet({
       formData.append("description", data.description || "");
       formData.append("category_id", data.category_id);
       formData.append("price", data.price.toString());
-      formData.append("status", data.status);
+      // formData.append("status", data.status);
       formData.append("cost_price", data.cost_price?.toString() || "");
       formData.append("stock_quantity", data.stock_quantity.toString());
 
@@ -376,7 +376,7 @@ export function AddProductSheet({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="category_id">Category</Label>
               {categoryLoading && (
@@ -416,7 +416,7 @@ export function AddProductSheet({
               )}
             </div>
 
-            <div>
+            {/* <div>
               <Label htmlFor="status">Status</Label>
               <Controller
                 name="status"
@@ -439,7 +439,7 @@ export function AddProductSheet({
                   {form.formState.errors.status.message}
                 </p>
               )}
-            </div>
+            </div> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
