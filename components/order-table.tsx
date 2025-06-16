@@ -62,6 +62,14 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
+interface OrderStatchApiResponse {
+  totalOrders: number;
+  processing: number;
+  pendingPayments: number;
+  revenue: number;
+  averageOrderValue: number;
+}
+
 function EnhancedPagination({
   currentPage,
   totalPages,
@@ -166,52 +174,12 @@ export function OrderTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  // Import the Order type if not already imported
+  const [singelOrder, setSingelOrder] = useState<string | null>(null);
+
   const [isOpen, setIsOpen] = useState(false);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
-  // Add sorting state if needed, e.g., { column: 'date', direction: 'desc' }
-  // const filteredAndSortedOrders = useMemo(() => {
-  //   let processedOrders = [...allOrders];
-
-  //   // Search
-  //   if (searchTerm) {
-  //     processedOrders = processedOrders.filter(
-  //       (order) =>
-  //         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //         order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //         order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  //     );
-  //   }
-
-  //   // Payment Filter
-  //   if (paymentFilter !== "All Payments") {
-  //     processedOrders = processedOrders.filter(
-  //       (order) => order.paymentStatus === paymentFilter
-  //     );
-  //   }
-
-  //   // Status Filter
-  //   if (statusFilter !== "All Status") {
-  //     processedOrders = processedOrders.filter(
-  //       (order) => order.fulfillmentStatus === statusFilter
-  //     );
-  //   }
-
-  //   // Sorting (example: by date descending)
-  //   processedOrders.sort(
-  //     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  //   );
-
-  //   return processedOrders;
-  // }, [allOrders, searchTerm, paymentFilter, statusFilter]);
-
-  // const totalPages = Math.ceil(filteredAndSortedOrders.length / ITEMS_PER_PAGE);
-
-  // const currentTableData = useMemo(() => {
-  //   const firstPageIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  //   const lastPageIndex = firstPageIndex + ITEMS_PER_PAGE;
-  //   return filteredAndSortedOrders.slice(firstPageIndex, lastPageIndex);
-  // }, [currentPage, filteredAndSortedOrders]);
 
   const { data, error, isLoading } = useQuery<OrdersApiResponse>({
     queryKey: ["orders", currentPage, searchTerm],
@@ -233,7 +201,27 @@ export function OrderTable() {
 
   const orderData = data?.data;
 
-  console.log(orderData);
+  const {
+    data: orderStats,
+    error: orderStatsError,
+    isLoading: orderStatsLoading,
+  } = useQuery<OrderStatchApiResponse>({
+    queryKey: ["orderStats", currentPage, searchTerm],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats-table`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch order");
+      return res.json();
+    },
+  });
 
   console.log(error);
 
@@ -256,31 +244,9 @@ export function OrderTable() {
     setCurrentPage(page);
   };
 
-  // interface ViewOrder {
-  //   id: string;
-  //   uniq_id?: string;
-  //   customerName?: string;
-  //   full_name?: string;
-  //   totalAmount?: number;
-  //   shipping_price?: number;
-  //   [key: string]: unknown;
-  // }
-
-  // const viewOrderDetails = (order: ViewOrder) => {
-  //   // In a real app, this might open a modal or navigate to an order detail page
-  //   toast({
-  //     title: `Order Details: ${order.id}`,
-  //     description: `Customer: ${
-  //       order.customerName ?? order.full_name ?? ""
-  //     }, Total: $${(order.totalAmount ?? order.shipping_price ?? 0).toFixed(
-  //       2
-  //     )}`,
-  //   });
-  // };
-
   const getPaymentBadgeVariant = (status: string) => {
     if (status === "Paid") return "default"; // Greenish
-    if (status === "Pending") return "secondary"; // Yellowish
+    if (status === "pending") return "secondary"; // Yellowish
     if (status === "Failed") return "destructive"; // Reddish
     return "outline";
   };
@@ -293,19 +259,6 @@ export function OrderTable() {
     return "outline";
   };
 
-  // Stats based on all orders
-
-  // const totalOrdersCount = allOrders.length;
-  // const processingCount = allOrders.filter(
-  //   (o) => o.fulfillmentStatus === "Processing"
-  // ).length;
-  // const pendingPaymentsCount = allOrders.filter(
-  //   (o) => o.paymentStatus === "Pending"
-  // ).length;
-  // const totalRevenue = allOrders
-  //   .filter((o) => o.paymentStatus === "paid")
-  //   .reduce((sum, o) => sum + o.totalAmount, 0);
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-brand-text-dark">
@@ -313,14 +266,42 @@ export function OrderTable() {
       </h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Orders" value={String(10)} icon={PackageCheck} />
-        <StatCard title="Processing" value={String(20)} icon={Clock} />
-        <StatCard
-          title="Pending Payments"
-          value={String(30)}
-          icon={AlertCircle}
-        />
-        <StatCard title="Revenue" value={String(9)} icon={DollarSign} />
+        {orderStatsError ? (
+          <div className="md:col-span-2 lg:col-span-4 flex items-start gap-2 p-3 rounded-md bg-red-100 text-red-700 text-sm font-medium">
+            <AlertCircle className="w-4 h-4 mt-[2px]" />
+            <span>{orderStatsError.message}</span>
+          </div>
+        ) : orderStatsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="p-4 border rounded-xl shadow-sm space-y-3">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total Orders"
+              value={String(orderStats?.totalOrders ?? "")}
+              icon={PackageCheck}
+            />
+            <StatCard
+              title="Processing"
+              value={String(orderStats?.processing ?? "")}
+              icon={Clock}
+            />
+            <StatCard
+              title="Pending Payments"
+              value={String(orderStats?.pendingPayments ?? "")}
+              icon={AlertCircle}
+            />
+            <StatCard
+              title="Revenue"
+              value={String(orderStats?.revenue ?? "")}
+              icon={DollarSign}
+            />
+          </>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 border p-5 rounded-[15px]">
@@ -427,45 +408,47 @@ export function OrderTable() {
               orderData &&
               orderData.data?.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell className="font-medium">{order.uniq_id}</TableCell>
-                  <TableCell>{order.customer.full_name}</TableCell>
-                  <TableCell>{order.customer.email}</TableCell>
-                  <TableCell>{order.created_at}</TableCell>
-                  <TableCell>{order.items}item(s)</TableCell>
-                  <TableCell>${order.shipping_price}</TableCell>
+                  <TableCell className="font-medium">{order?.id}</TableCell>
+                  <TableCell className="font-medium">
+                    {order?.uniq_id}
+                  </TableCell>
+                  <TableCell>{order?.customer?.full_name}</TableCell>
+                  <TableCell>{order?.customer?.email}</TableCell>
+                  <TableCell>{order?.created_at}</TableCell>
+                  <TableCell>{order?.items}item(s)</TableCell>
+                  <TableCell>${order?.shipping_price}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={getPaymentBadgeVariant(order.payment_status)}
+                      variant={getPaymentBadgeVariant(order?.payment_status)}
                       className={
-                        order.payment_method === "paid"
+                        order?.payment_method === "paid"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : order.payment_status === "pending"
+                          : order?.payment_status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order.payment_status === "failed"
+                          : order?.payment_status === "failed"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
                     >
-                      {order.payment_status}
+                      {order?.payment_status}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={getFulfillmentBadgeVariant(order.status)}
+                      variant={getFulfillmentBadgeVariant(order?.status)}
                       className={
-                        order.status === "Delivered"
+                        order?.status === "Delivered"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : order.status === "Shipped"
+                          : order?.status === "Shipped"
                           ? "bg-blue-100 text-blue-700 border-blue-200"
-                          : order.status === "Processing"
+                          : order?.status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order.status === "Cancelled"
+                          : order?.status === "Cancelled"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
                     >
-                      {order.status}
+                      {order?.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -479,6 +462,7 @@ export function OrderTable() {
                         <DropdownMenuItem
                           onClick={() => {
                             setIsOpen(true);
+                            setSingelOrder(order?.uniq_id);
                             // viewOrderDetails({
                             //   ...order,
                             //   id: String(order.id),
@@ -496,7 +480,11 @@ export function OrderTable() {
               ))}
           </TableBody>
         </Table>
-        <OrderDetails setOpen={setIsOpen} open={isOpen} />
+        <OrderDetails
+          orderId={singelOrder ?? ""}
+          setOpen={setIsOpen}
+          open={isOpen}
+        />
         {/* Enhanced Pagination */}
         {data && data?.total_pages > 1 && (
           <EnhancedPagination

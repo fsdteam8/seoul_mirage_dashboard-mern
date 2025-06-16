@@ -5,13 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const session = useSession();
-  const token = session?.data?.accessToken ?? {};
-
+  const { data: session, status } = useSession();
   const router = useRouter();
+
   useEffect(() => {
-    router.push("/dashboard");
-  }, [router, token]);
+    if (status === "authenticated") {
+      if (session?.user?.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/unauthorized");
+      }
+    }
+  }, [status, session, router]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-brand-bg-light">
@@ -22,7 +27,7 @@ export default function Home() {
         <p className="text-lg mb-6">
           This is the dashboard for managing your Seoul Mirage application.
         </p>
-        <Link href={"/login"}>
+        <Link href={"/dashboard"}>
           <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Go to Dashboard
           </button>

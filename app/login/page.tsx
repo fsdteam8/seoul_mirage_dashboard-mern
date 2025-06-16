@@ -44,6 +44,7 @@ export default function LoginPage() {
         email: data.email,
         password: data.password,
         redirect: false,
+        callbackUrl:"/dashboard"
       });
       if (!res?.ok) {
         toast({
