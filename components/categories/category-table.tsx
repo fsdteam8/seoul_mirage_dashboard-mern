@@ -128,16 +128,17 @@ function EnhancedPagination({
 
 export function CategoryTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const session = useSession();
-  const token = session?.data?.accessToken ?? {};
+  interface SessionUser {
+    token?: string;
+    // add other user properties if needed
+  }
+  const token = (session?.data?.user as SessionUser)?.token || "";
   const queryClient = useQueryClient();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
-
-  // 👇 Confirmation Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryIdToDelete, setCategoryIdToDelete] = useState<string | null>(
     null
@@ -147,10 +148,17 @@ export function CategoryTable() {
     queryKey: ["categories", currentPage, searchTerm],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/categories?page=${currentPage}`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/categories?page=${currentPage}&search=${encodeURIComponent(
+          searchTerm
+        )}`,
         {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         }
       );
       if (!res.ok) throw new Error("Failed to fetch categories");
@@ -192,7 +200,6 @@ export function CategoryTable() {
     },
   });
 
-  // 👇 Delete with modal confirmation
   const handleDeleteClick = (categoryId: string) => {
     setCategoryIdToDelete(categoryId);
     setIsModalOpen(true);
@@ -222,7 +229,12 @@ export function CategoryTable() {
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  if (error) return <p className="text-center">Error</p>;
+  const totalCount = data?.total || 0;
+
+  if (error)
+    return (
+      <p className="text-center text-red-500">Error loading categories.</p>
+    );
 
   return (
     <div className="space-y-6">
