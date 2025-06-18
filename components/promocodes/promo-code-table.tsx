@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,8 +33,6 @@ import {
   Edit2,
   PlusCircle,
   Copy,
-  // CheckCircle,
-  // XCircle,
   Clock,
   Gift,
   DollarSign,
@@ -47,25 +44,17 @@ import {
   XCircle,
 } from "lucide-react";
 import {
-  // type PromoCode,
   type PromoCodeStatus,
   promoCodeStatuses,
-  // getEffectivePromoCodeStatus,
 } from "@/app/dashboard/promocodes/types";
-// import { togglePromoCodeStatusAction } from "@/app/dashboard/promocodes/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AddPromoCodeSheet } from "./add-promo-code-sheet";
 import { StatCard } from "@/components/stat-card";
-// import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { PromoCode, PromoCodeResponse } from "@/types/PromocodeDataType";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
-// import { Badge } from "../ui/badge";
 
-// const ITEMS_PER_PAGE = 10;
-
-// Enhanced Pagination Component
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -83,22 +72,18 @@ function EnhancedPagination({
   isLoading = false,
   onPageChange,
 }: PaginationProps) {
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Show pages around current page
       let start = Math.max(1, currentPage - 2);
       let end = Math.min(totalPages, currentPage + 2);
 
-      // Adjust if we're near the beginning or end
       if (currentPage <= 3) {
         end = Math.min(5, totalPages);
       } else if (currentPage >= totalPages - 2) {
@@ -119,16 +104,12 @@ function EnhancedPagination({
 
   return (
     <div className="flex items-center justify-between border-t bg-white px-6 py-4">
-      {/* Results count */}
       <div className="text-sm text-gray-700">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalCount}</span> results
       </div>
-
-      {/* Pagination controls */}
       <div className="flex items-center space-x-1">
-        {/* Previous button */}
         <Button
           variant="outline"
           size="sm"
@@ -138,8 +119,6 @@ function EnhancedPagination({
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
         </Button>
-
-        {/* Page numbers */}
         <div className="flex items-center space-x-1 mx-2">
           {pageNumbers.map((pageNum) => (
             <Button
@@ -158,8 +137,6 @@ function EnhancedPagination({
             </Button>
           ))}
         </div>
-
-        {/* Next button */}
         <Button
           variant="outline"
           size="sm"
@@ -175,27 +152,30 @@ function EnhancedPagination({
 }
 
 export function PromoCodeTable() {
-  // const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [totalPages, setTotalPages] = useState(1);
-  // const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<PromoCodeStatus | "All">(
     "All"
   );
-  // const [isLoading, startTransition] = useTransition();
   const { toast } = useToast();
-
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [promoCodeToEdit, setPromoCodeToEdit] = useState<PromoCode | null>(
     null
   );
 
   const { data, isLoading, error } = useQuery<PromoCodeResponse>({
-    queryKey: ["promocodes", currentPage, searchTerm],
+    queryKey: ["promocodes", currentPage, searchTerm, statusFilter],
     queryFn: async () => {
+      // Construct query parameters
+      const params = new URLSearchParams();
+      params.append("page", String(currentPage));
+      if (searchTerm) params.append("search", searchTerm);
+      if (statusFilter !== "All") params.append("status", statusFilter);
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes?page=${currentPage}`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/promocodes?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -203,32 +183,12 @@ export function PromoCodeTable() {
           },
         }
       );
-      if (!res.ok) {
-        throw new Error("Failed to fetch blogs");
-      }
+      if (!res.ok) throw new Error("Failed to fetch promo codes");
       return res.json();
     },
   });
 
   const promoCode = data?.data?.data || [];
-
-  // const fetchPromoCodesData = () => {
-  //   startTransition(async () => {
-  //     const data = await getPromoCodes(
-  //       currentPage,
-  //       ITEMS_PER_PAGE,
-  //       searchTerm,
-  //       statusFilter
-  //     );
-  //     setPromoCodes(promoCode);
-  //     setTotalPages(data.totalPages);
-  //     setTotalCount(data.totalCount);
-  //   });
-  // };
-
-  // useEffect(() => {
-  //   fetchPromoCodesData();
-  // }, [currentPage, searchTerm, statusFilter]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -243,23 +203,6 @@ export function PromoCodeTable() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  // const handleToggleStatus = async (promoCode: PromoCode) => {
-  //   startTransition(async () => {
-  //     const newStatus = !promoCode.isActive;
-  //     const result = await togglePromoCodeStatusAction(promoCode.id, newStatus);
-  //     if (result.success) {
-  //       toast({ title: "Status Updated", description: result.message });
-  //       fetchPromoCodesData();
-  //     } else {
-  //       toast({
-  //         title: "Error",
-  //         description: result.message,
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   });
-  // };
 
   const handleEditPromoCode = (promoCode: PromoCode) => {
     setPromoCodeToEdit(promoCode);
@@ -277,17 +220,15 @@ export function PromoCodeTable() {
   };
 
   const getStatusBadgeVariant = (status: PromoCodeStatus) => {
-    console.log(status);
-
     switch (status) {
       case "active":
-        return "default"; // Greenish
+        return "default";
       case "inactive":
-        return "outline"; // Grayish
+        return "outline";
       case "expired":
-        return "secondary"; // Yellowish/Orangeish
+        return "secondary";
       case "Fully Used":
-        return "destructive"; // Reddish
+        return "destructive";
       default:
         return "outline";
     }
@@ -307,19 +248,6 @@ export function PromoCodeTable() {
         return null;
     }
   };
-
-  // Simulated stats - in a real app, these would come from backend aggregates
-  // const activeCodesCount = promoCode.filter(
-  //   (pc) => getEffectivePromoCodeStatus(pc) === "Active"
-  // ).length;
-  // const totalRedeemedValue = promoCode.reduce((sum, pc) => {
-  //   if (pc.type === "fixed") return sum + pc.timesUsed * pc.discountValue;
-  //   // For percentage, this is harder to calculate without knowing order values.
-  //   // Let's simulate an average order value of $50 for percentage discounts.
-  //   if (pc.type === "percentage")
-  //     return sum + pc.timesUsed * (50 * (pc.discountValue / 100));
-  //   return sum;
-  // }, 0);
 
   return (
     <div className="space-y-6">
@@ -380,16 +308,21 @@ export function PromoCodeTable() {
         </Select>
       </div>
 
+      {error && (
+        <div className="flex items-start gap-2 p-3 rounded-md bg-red-100 text-red-700 text-sm font-medium">
+          <XCircle className="w-4 h-4 mt-[2px]" />
+          <span>{error.message}</span>
+        </div>
+      )}
+
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Code</TableHead>
               <TableHead>Description</TableHead>
-              {/* <TableHead>Discount</TableHead> */}
               <TableHead>Usage</TableHead>
               <TableHead>Min. Purchase</TableHead>
-              {/* <TableHead>Expires</TableHead> */}
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
@@ -406,7 +339,6 @@ export function PromoCodeTable() {
                     <TableCell>
                       <Skeleton className="h-4 w-40" />
                     </TableCell>
-                    {/* <TableCell><Skeleton className="h-4 w-20" /></TableCell> */}
                     <TableCell>
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
@@ -417,105 +349,77 @@ export function PromoCodeTable() {
                       <Skeleton className="h-4 w-28" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
                   </TableRow>
                 ))}
-            {error && (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
-                  Sorry Try Again
-                </TableCell>
-              </TableRow>
-            )}
             {!isLoading && promoCode.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No promo codes found.
                 </TableCell>
               </TableRow>
             )}
             {!isLoading &&
-              promoCode.map((pc) => {
-                // const effectiveStatus = pc;
-                return (
-                  <TableRow key={pc.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <span>{pc.name}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleCopyToClipboard(pc.name)}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-gray-600 max-w-[200px] truncate">
-                      {pc.description || "-"}
-                    </TableCell>
-                    {/* <TableCell>
-                      {pc.discountType === "percentage"
-                        ? `${pc.discountValue}% `
-                        : `$${pc.discountValue.toFixed(2)}`}
-                    </TableCell> */}
-                    <TableCell>{pc.usage_limit}</TableCell>
-                    <TableCell>{pc.amount}</TableCell>
-                    {/* <TableCell>
-                      {pc.expiryDate
-                        ? format(new Date(pc.expiryDate), "MMM dd, yyyy")
-                        : "Never"}
-                    </TableCell> */}
-                    <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(pc.status)}
-                        className="flex items-center gap-1 capitalize"
+              promoCode.map((pc) => (
+                <TableRow key={pc.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{pc.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleCopyToClipboard(pc.name)}
                       >
-                        {getStatusIcon(pc.status)}
-                        {pc.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-5 w-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditPromoCode(pc)}
-                          >
-                            <Edit2 className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                          // onClick={() => handleToggleStatus(pc)}
-                          >
-                            {pc.status == "active" ? (
-                              <EyeOff className="mr-2 h-4 w-4" />
-                            ) : (
-                              <Eye className="mr-2 h-4 w-4" />
-                            )}
-                            {pc.status == "inactive"
-                              ? "Deactivate"
-                              : "Activate"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-600 max-w-[200px] truncate">
+                    {pc.description || "-"}
+                  </TableCell>
+                  <TableCell>{pc.usage_limit}</TableCell>
+                  <TableCell>{pc.amount}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={getStatusBadgeVariant(pc.status)}
+                      className="flex items-center gap-1 capitalize"
+                    >
+                      {getStatusIcon(pc.status)}
+                      {pc.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleEditPromoCode(pc)}
+                        >
+                          <Edit2 className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          {pc.status === "active" ? (
+                            <EyeOff className="mr-2 h-4 w-4" />
+                          ) : (
+                            <Eye className="mr-2 h-4 w-4" />
+                          )}
+                          {pc.status === "inactive" ? "Deactivate" : "Activate"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
 
-        {/* Enhanced Pagination */}
         {data && data.total_pages > 1 && (
           <EnhancedPagination
             currentPage={data?.current_page}

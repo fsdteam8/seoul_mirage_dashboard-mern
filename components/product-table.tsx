@@ -479,8 +479,8 @@ export function ProductTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All Status">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            {/* <SelectItem value="active">Active</SelectItem> */}
+            {/* <SelectItem value="inactive">Inactive</SelectItem> */}
             <SelectItem value="low_stock">Low Stock</SelectItem>
             <SelectItem value="out_of_stock">Out of Stock</SelectItem>
           </SelectContent>
