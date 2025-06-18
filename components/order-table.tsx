@@ -38,22 +38,16 @@ import {
   ChevronRight,
 } from "lucide-react";
 import {
-  // type Order,
-  // mockOrders,
   orderPaymentStatuses,
   orderFulfillmentStatuses,
 } from "@/app/dashboard/orders/types";
 import { StatCard } from "@/components/stat-card";
-// import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "./ui/skeleton";
 import { OrdersApiResponse } from "@/types/OrderDataType";
 import { useSession } from "next-auth/react";
 import OrderDetails from "@/app/dashboard/orders/_components/order-details-popup";
 
-// const ITEMS_PER_PAGE = 10;
-
-// Enhanced Pagination Component
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -77,22 +71,18 @@ function EnhancedPagination({
   itemsPerPage,
   onPageChange,
 }: PaginationProps) {
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Show pages around current page
       let start = Math.max(1, currentPage - 2);
       let end = Math.min(totalPages, currentPage + 2);
 
-      // Adjust if we're near the beginning or end
       if (currentPage <= 3) {
         end = Math.min(5, totalPages);
       } else if (currentPage >= totalPages - 2) {
@@ -113,16 +103,12 @@ function EnhancedPagination({
 
   return (
     <div className="flex items-center justify-between border-t bg-white px-6 py-4">
-      {/* Results count */}
       <div className="text-sm text-gray-700">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalCount}</span> results
       </div>
-
-      {/* Pagination controls */}
       <div className="flex items-center space-x-1">
-        {/* Previous button */}
         <Button
           variant="outline"
           size="sm"
@@ -132,8 +118,6 @@ function EnhancedPagination({
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
         </Button>
-
-        {/* Page numbers */}
         <div className="flex items-center space-x-1 mx-2">
           {pageNumbers.map((pageNum) => (
             <Button
@@ -151,8 +135,6 @@ function EnhancedPagination({
             </Button>
           ))}
         </div>
-
-        {/* Next button */}
         <Button
           variant="outline"
           size="sm"
@@ -168,24 +150,28 @@ function EnhancedPagination({
 }
 
 export function OrderTable() {
-  // const { toast } = useToast();
-  // const [allOrders] = useState<Order[]>(mockOrders); // Store all orders for client-side filtering/sorting
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  // Import the Order type if not already imported
   const [singelOrder, setSingelOrder] = useState<string | null>(null);
-
   const [isOpen, setIsOpen] = useState(false);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
 
   const { data, error, isLoading } = useQuery<OrdersApiResponse>({
-    queryKey: ["orders", currentPage, searchTerm],
+    queryKey: ["orders", currentPage, searchTerm, paymentFilter, statusFilter],
     queryFn: async () => {
+      // Construct query parameters
+      const params = new URLSearchParams();
+      params.append("page", String(currentPage));
+      if (searchTerm) params.append("search", searchTerm);
+      if (paymentFilter !== "All Payments")
+        params.append("payment_status", paymentFilter);
+      if (statusFilter !== "All Status") params.append("status", statusFilter);
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/orders?page=${currentPage}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -194,7 +180,7 @@ export function OrderTable() {
           },
         }
       );
-      if (!res.ok) throw new Error("Failed to fetch order");
+      if (!res.ok) throw new Error("Failed to fetch orders");
       return res.json();
     },
   });
@@ -206,7 +192,7 @@ export function OrderTable() {
     error: orderStatsError,
     isLoading: orderStatsLoading,
   } = useQuery<OrderStatchApiResponse>({
-    queryKey: ["orderStats", currentPage, searchTerm],
+    queryKey: ["orderStats"],
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats-table`,
@@ -218,7 +204,7 @@ export function OrderTable() {
           },
         }
       );
-      if (!res.ok) throw new Error("Failed to fetch order");
+      if (!res.ok) throw new Error("Failed to fetch order stats");
       return res.json();
     },
   });
@@ -245,15 +231,15 @@ export function OrderTable() {
   };
 
   const getPaymentBadgeVariant = (status: string) => {
-    if (status === "Paid") return "default"; // Greenish
-    if (status === "pending") return "secondary"; // Yellowish
-    if (status === "Failed") return "destructive"; // Reddish
+    if (status === "Paid") return "default";
+    if (status === "pending") return "secondary";
+    if (status === "Failed") return "destructive";
     return "outline";
   };
 
   const getFulfillmentBadgeVariant = (status: string) => {
     if (status === "Delivered") return "default";
-    if (status === "Shipped") return "default"; // Could be different blue
+    if (status === "Shipped") return "default";
     if (status === "Processing") return "secondary";
     if (status === "Cancelled") return "destructive";
     return "outline";
@@ -386,7 +372,7 @@ export function OrderTable() {
           <TableBody>
             {orderData && orderData.data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
+                <TableCell colSpan={10} className="h-24 text-center">
                   No orders found.
                 </TableCell>
               </TableRow>
@@ -422,9 +408,9 @@ export function OrderTable() {
                     <Skeleton className="h-6 w-24 rounded-full" />
                   </TableCell>
                   <TableCell className="flex item-center justify-center">
-                    <Skeleton className="h-2 w-2 " />
-                    <Skeleton className="h-2 w-2 " />
-                    <Skeleton className="h-2 w-2 " />
+                    <Skeleton className="h-2 w-2" />
+                    <Skeleton className="h-2 w-2" />
+                    <Skeleton className="h-2 w-2" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -439,17 +425,17 @@ export function OrderTable() {
                   <TableCell>{order?.customer?.full_name}</TableCell>
                   <TableCell>{order?.customer?.email}</TableCell>
                   <TableCell>{order?.created_at}</TableCell>
-                  <TableCell>{order?.items}item(s)</TableCell>
+                  <TableCell>{order?.items} item(s)</TableCell>
                   <TableCell>${order?.shipping_price}</TableCell>
                   <TableCell>
                     <Badge
                       variant={getPaymentBadgeVariant(order?.payment_status)}
                       className={
-                        order?.payment_method === "paid"
+                        order?.payment_status === "Paid"
                           ? "bg-green-100 text-green-700 border-green-200"
                           : order?.payment_status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order?.payment_status === "failed"
+                          : order?.payment_status === "Failed"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
@@ -487,16 +473,10 @@ export function OrderTable() {
                           onClick={() => {
                             setIsOpen(true);
                             setSingelOrder(order?.uniq_id);
-                            // viewOrderDetails({
-                            //   ...order,
-                            //   id: String(order.id),
-                            //   shipping_price: Number(order.shipping_price),
-                            // });
                           }}
                         >
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
-                        {/* Add other actions like 'Update Status', 'Refund', etc. */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -509,7 +489,6 @@ export function OrderTable() {
           setOpen={setIsOpen}
           open={isOpen}
         />
-        {/* Enhanced Pagination */}
         {data && data?.total_pages > 1 && (
           <EnhancedPagination
             currentPage={data.current_page}
