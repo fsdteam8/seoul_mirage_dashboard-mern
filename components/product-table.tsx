@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
-// import Image from "next/image";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -50,6 +49,23 @@ import Image from "next/image";
 import { Product, ProductApiResponse } from "@/types/ProductDataType";
 import AlertModal from "./ui/alert-modal";
 
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 // Enhanced Pagination Component
 interface PaginationProps {
   currentPage: number;
@@ -60,7 +76,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-interface ProductStatchApiResponse {
+interface ProductStatsApiResponse {
   totalProducts: number;
   lowStock: number;
   outOfStock: number;
@@ -160,18 +176,19 @@ function EnhancedPagination({
 export function ProductTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [totalCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(null);
   const session = useSession();
-  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(
-    null
-  );
-  const token = session?.data?.accessToken ?? {};
+  const token = session?.data?.accessToken ?? "";
+
+  // Debounce search term to prevent excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // Fetch products from your API
   const {
     data,
@@ -182,17 +199,25 @@ export function ProductTable() {
     queryKey: [
       "products",
       currentPage,
-      searchTerm,
+      debouncedSearchTerm,
       categoryFilter,
       statusFilter,
     ],
     queryFn: async () => {
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+        ...(categoryFilter !== "All" && { category: categoryFilter }),
+        ...(statusFilter !== "All Status" && { status: statusFilter }),
+      });
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products?page=${currentPage}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products?${queryParams}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
           },
         }
       );
@@ -211,8 +236,8 @@ export function ProductTable() {
     data: productStats,
     error: productStatsError,
     isLoading: productStatsLoading,
-  } = useQuery<ProductStatchApiResponse>({
-    queryKey: ["orderStats", currentPage, searchTerm],
+  } = useQuery<ProductStatsApiResponse>({
+    queryKey: ["productStats", currentPage, debouncedSearchTerm],
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/products-stats`,
@@ -224,14 +249,14 @@ export function ProductTable() {
           },
         }
       );
-      if (!res.ok) throw new Error("Failed to fetch order");
+      if (!res.ok) throw new Error("Failed to fetch product stats");
       return res.json();
     },
   });
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    // setCurrentPage(1);
+    setCurrentPage(1);
   };
 
   const handleCategoryChange = (value: string) => {
@@ -258,7 +283,6 @@ export function ProductTable() {
           headers: {
             Accept: "multipart/form-data",
             ...(token && { Authorization: `Bearer ${token}` }),
-            // Don't set Content-Type - let browser set it for FormData
           },
         }
       );
@@ -274,7 +298,7 @@ export function ProductTable() {
         title: "Product deleted successfully",
         description: "The product has been removed from your inventory.",
       });
-      refetch(); // Refresh the product list
+      refetch();
     },
     onError: (error: Error) => {
       toast({
@@ -299,14 +323,15 @@ export function ProductTable() {
   };
 
   const handleProduct = () => {
-    setProductToEdit(null); // Clear any existing product to edit
+    setProductToEdit(null);
     setIsSheetOpen(true);
   };
+
   const handleEditProduct = (product: Product) => {
     setIsSheetOpen(true);
     setProductToEdit(product);
-    // You can pass the product data to the sheet if needed
   };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -344,18 +369,7 @@ export function ProductTable() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
-  // Calculate stats
-  // const totalProductsCount = totalCount;
-  // const lowStockCount = products.filter((p) => p.status === "low_stock").length;
-  // const outOfStockCount = products.filter(
-  //   (p) => p.status === "out_of_stock"
-  // ).length;
-  // const totalValue = products.reduce(
-  //   (sum, p) => sum + Number.parseFloat(p.price) * p.stock_quantity,
-  //   0
-  // );
 
-  // Get unique categories for filter
   const categories = Array.from(new Set(products.map((p) => p.category.name)));
 
   if (error) {
@@ -480,9 +494,9 @@ export function ProductTable() {
           <SelectContent>
             <SelectItem value="All Status">All Status</SelectItem>
             {/* <SelectItem value="active">Active</SelectItem> */}
-            {/* <SelectItem value="inactive">Inactive</SelectItem> */}
-            <SelectItem value="low_stock">Low Stock</SelectItem>
-            <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+            <SelectItem value="low stock">Low Stock</SelectItem>
+            <SelectItem value="out of stock">Out of Stock</SelectItem>
+            {/* <SelectItem value="available">Inactive</SelectItem> */}
           </SelectContent>
         </Select>
       </div>
@@ -625,9 +639,6 @@ export function ProductTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {/* <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" /> View Details
-                        </DropdownMenuItem> */}
                         <DropdownMenuItem
                           onClick={() => handleEditProduct(product)}
                         >

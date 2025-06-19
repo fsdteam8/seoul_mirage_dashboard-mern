@@ -10,7 +10,7 @@ export default function ManageProductsPage() {
         <div className="text-center p-8">Loading product management...</div>
       }
     >
-      <ProductTable />
+      <ProductTable/>
     </Suspense>
   );
 }
