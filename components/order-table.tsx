@@ -47,6 +47,9 @@ import { Skeleton } from "./ui/skeleton";
 import { OrdersApiResponse } from "@/types/OrderDataType";
 import { useSession } from "next-auth/react";
 import OrderDetails from "@/app/dashboard/orders/_components/order-details-popup";
+import StatusCell from "./SelectStatus";
+// import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+type StatusType = "pending" | "cancelled" | "delivered";
 
 interface PaginationProps {
   currentPage: number;
@@ -158,7 +161,7 @@ export function OrderTable() {
   const [isOpen, setIsOpen] = useState(false);
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
-
+  // const allStatuses = ["Delivered", "Shipped", "Processing", "Cancelled"];
   const { data, error, isLoading } = useQuery<OrdersApiResponse>({
     queryKey: ["orders", currentPage, searchTerm, paymentFilter, statusFilter],
     queryFn: async () => {
@@ -210,7 +213,7 @@ export function OrderTable() {
   });
 
   console.log(error);
-
+  console.log(orderData?.data);
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
@@ -237,13 +240,13 @@ export function OrderTable() {
     return "outline";
   };
 
-  const getFulfillmentBadgeVariant = (status: string) => {
-    if (status === "Delivered") return "default";
-    if (status === "Shipped") return "default";
-    if (status === "Processing") return "secondary";
-    if (status === "Cancelled") return "destructive";
-    return "outline";
-  };
+  // const getFulfillmentBadgeVariant = (status: string) => {
+  //   if (status === "Delivered") return "default";
+  //   if (status === "Shipped") return "default";
+  //   if (status === "Processing") return "secondary";
+  //   if (status === "Cancelled") return "destructive";
+  //   return "outline";
+  // };
 
   return (
     <div className="space-y-6">
@@ -424,18 +427,29 @@ export function OrderTable() {
                   </TableCell>
                   <TableCell>{order?.customer?.full_name}</TableCell>
                   <TableCell>{order?.customer?.email}</TableCell>
-                  <TableCell>{order?.created_at}</TableCell>
+                  <TableCell>
+                    {order?.created_at
+                      ? new Date(order.created_at).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "-"}
+                  </TableCell>
                   <TableCell>{order?.items} item(s)</TableCell>
-                  <TableCell>${order?.shipping_price}</TableCell>
+                  <TableCell>${order?.total}</TableCell>
                   <TableCell>
                     <Badge
                       variant={getPaymentBadgeVariant(order?.payment_status)}
                       className={
-                        order?.payment_status === "Paid"
+                        order?.payment_status === "paid"
                           ? "bg-green-100 text-green-700 border-green-200"
                           : order?.payment_status === "pending"
                           ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : order?.payment_status === "Failed"
+                          : order?.payment_status === "failed"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : ""
                       }
@@ -443,7 +457,10 @@ export function OrderTable() {
                       {order?.payment_status}
                     </Badge>
                   </TableCell>
+
+                  {/* Status */}
                   <TableCell>
+                    {/* 
                     <Badge
                       variant={getFulfillmentBadgeVariant(order?.status)}
                       className={
@@ -459,8 +476,15 @@ export function OrderTable() {
                       }
                     >
                       {order?.status}
-                    </Badge>
+                      
+                    </Badge> */}
+
+                    <StatusCell
+                      orderId={order?.id}
+                      initialStatus={order?.status as StatusType}
+                    />
                   </TableCell>
+
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
