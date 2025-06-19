@@ -37,7 +37,6 @@ import {
   Gift,
   DollarSign,
   EyeOff,
-  Eye,
   ChevronLeft,
   ChevronRight,
   CheckCircle,
@@ -166,7 +165,6 @@ export function PromoCodeTable() {
   const { data, isLoading, error } = useQuery<PromoCodeResponse>({
     queryKey: ["promocodes", currentPage, searchTerm, statusFilter],
     queryFn: async () => {
-      // Construct query parameters
       const params = new URLSearchParams();
       params.append("page", String(currentPage));
       if (searchTerm) params.append("search", searchTerm);
@@ -184,6 +182,26 @@ export function PromoCodeTable() {
         }
       );
       if (!res.ok) throw new Error("Failed to fetch promo codes");
+      return res.json();
+    },
+  });
+  const {
+    data: promostats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery({
+    queryKey: ["promocodeStats"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/promocode-stats`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch promo code stats");
       return res.json();
     },
   });
@@ -219,34 +237,44 @@ export function PromoCodeTable() {
     toast({ title: "Copied!", description: `"${text}" copied to clipboard.` });
   };
 
-  const getStatusBadgeVariant = (status: PromoCodeStatus) => {
-    switch (status) {
+  // Normalize status and map to badge variant
+  const getStatusBadgeVariant = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
       case "active":
         return "default";
       case "inactive":
         return "outline";
       case "expired":
         return "secondary";
-      case "Fully Used":
+      case "fully used":
         return "destructive";
       default:
         return "outline";
     }
   };
 
-  const getStatusIcon = (status: PromoCodeStatus) => {
-    switch (status) {
+  const getStatusIcon = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
       case "active":
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case "inactive":
         return <EyeOff className="h-4 w-4 text-gray-500" />;
       case "expired":
         return <Clock className="h-4 w-4 text-orange-500" />;
-      case "Fully Used":
+      case "fully used":
         return <XCircle className="h-4 w-4 text-red-600" />;
       default:
         return null;
     }
+  };
+
+  const statusLabels: Record<string, string> = {
+    active: "Active",
+    inactive: "Inactive",
+    expired: "Expired",
+    "fully used": "Fully Used",
   };
 
   return (
@@ -263,19 +291,29 @@ export function PromoCodeTable() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Active Codes" value={String(10)} icon={Gift} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <StatCard
-          title="Total Redeemed Value"
-          value={String(20)}
-          icon={DollarSign}
-          description="(Simulated)"
+          title="Active Codes"
+          value={
+            statsLoading
+              ? "Loading..."
+              : statsError
+              ? "N/A"
+              : String(promostats?.active ?? 0)
+          }
+          icon={Gift}
         />
         <StatCard
-          title="Codes Expiring Soon"
-          value={"N/A"}
-          icon={Clock}
-          description="(Feature TBD)"
+          title="Inactive Codes"
+          value={
+            statsLoading
+              ? "Loading..."
+              : statsError
+              ? "N/A"
+              : String(promostats?.inactive ?? 0)
+          }
+          icon={DollarSign}
+          description="(Simulated)"
         />
       </div>
 
@@ -361,62 +399,58 @@ export function PromoCodeTable() {
               </TableRow>
             )}
             {!isLoading &&
-              promoCode.map((pc) => (
-                <TableRow key={pc.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <span>{pc.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleCopyToClipboard(pc.name)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-600 max-w-[200px] truncate">
-                    {pc.description || "-"}
-                  </TableCell>
-                  <TableCell>{pc.usage_limit}</TableCell>
-                  <TableCell>{pc.amount}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={getStatusBadgeVariant(pc.status)}
-                      className="flex items-center gap-1 capitalize"
-                    >
-                      {getStatusIcon(pc.status)}
-                      {pc.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleEditPromoCode(pc)}
+              promoCode.map((pc) => {
+                const normalizedStatus = pc.status.toLowerCase();
+                return (
+                  <TableRow key={pc.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{pc.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleCopyToClipboard(pc.name)}
                         >
-                          <Edit2 className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          {pc.status === "active" ? (
-                            <EyeOff className="mr-2 h-4 w-4" />
-                          ) : (
-                            <Eye className="mr-2 h-4 w-4" />
-                          )}
-                          {pc.status === "inactive" ? "Deactivate" : "Activate"}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[200px] truncate">
+                      {pc.description || "-"}
+                    </TableCell>
+                    <TableCell>{pc.usage_limit}</TableCell>
+                    <TableCell>{pc.amount}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={getStatusBadgeVariant(pc.status)}
+                        className="flex items-center gap-1 capitalize"
+                      >
+                        {getStatusIcon(pc.status)}
+                        {statusLabels[normalizedStatus] ?? pc.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditPromoCode(pc)}
+                          >
+                            <Edit2 className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {/* Additional menu items if needed */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
 

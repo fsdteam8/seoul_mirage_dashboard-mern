@@ -11,7 +11,8 @@ export interface Customer {
   country: string;
   created_at: string;
   updated_at: string;
-  orders_count:string
+  orders_count: string;
+  orders_sum_total: string;
 }
 
 export interface PaginationLink {

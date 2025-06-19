@@ -1,5 +1,5 @@
 export type type = "percentage" | "fixed";
-export type PromoCodeStatus = string
+export type PromoCodeStatus = string;
 
 export interface PromoCode {
   id: string;
@@ -141,8 +141,7 @@ export const mockPromoCodes: PromoCode[] = [
     name: generateRandomCode(),
     amount: 60,
     description: `Random promo code ${i + 1}`,
-    type:
-      i % 2 === 0 ? ("percentage" as type) : ("fixed" as type),
+    type: i % 2 === 0 ? ("percentage" as type) : ("fixed" as type),
     discountValue:
       i % 2 === 0
         ? Math.floor(Math.random() * 20) + 5
@@ -168,12 +167,7 @@ export const mockPromoCodes: PromoCode[] = [
   })),
 ];
 
-export const promoCodeStatuses: PromoCodeStatus[] = [
-  "active",
-  "inactive",
-  "expired",
-  "Fully Used",
-];
+export const promoCodeStatuses: PromoCodeStatus[] = ["active", "inactive"];
 export const types: type[] = ["percentage", "fixed"];
 
 // Helper to determine the actual status based on isActive, expiryDate, and usage

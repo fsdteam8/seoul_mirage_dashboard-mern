@@ -202,39 +202,7 @@ export function CustomerTable() {
 
   const customerData = data?.data;
 
-  // const filteredAndSortedCustomers = useMemo(() => {
-  //   let processedCustomers = [...allCustomers];
 
-  //   if (searchTerm) {
-  //     processedCustomers = processedCustomers.filter(
-  //       (customer) =>
-  //         customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //         customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //         customer.id.toLowerCase().includes(searchTerm.toLowerCase())
-  //     );
-  //   }
-
-  //   if (statusFilter !== "All Status") {
-  //     processedCustomers = processedCustomers.filter(
-  //       (customer) => customer.status === statusFilter
-  //     );
-  //   }
-
-  //   // Example sorting: by name alphabetically
-  //   processedCustomers.sort((a, b) => a.name.localeCompare(b.name));
-
-  //   return processedCustomers;
-  // }, [allCustomers, searchTerm, statusFilter]);
-
-  // const totalPages = Math.ceil(
-  //   filteredAndSortedCustomers.length / ITEMS_PER_PAGE
-  // );
-
-  // const currentTableData = useMemo(() => {
-  //   const firstPageIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  //   const lastPageIndex = firstPageIndex + ITEMS_PER_PAGE;
-  //   return filteredAndSortedCustomers.slice(firstPageIndex, lastPageIndex);
-  // }, [currentPage, filteredAndSortedCustomers]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -250,25 +218,7 @@ export function CustomerTable() {
     setCurrentPage(page);
   };
 
-  // const viewCustomerDetails = (customer: Customer) => {
-  //   toast({
-  //     title: `Customer Details: ${customer.name}`,
-  //     description: `Email: ${
-  //       customer.email
-  //     }, Total Spent: $${customer.totalSpent.toFixed(2)}`,
-  //   });
-  // };
 
-  // const editCustomerDetails = (customer: Customer) => {
-  //   toast({
-  //     title: `Edit Customer: ${customer.name}`,
-  //     description: `(Edit functionality not implemented yet)`,
-  //   });
-  // };
-
-  // const getStatusBadgeVariant = (status: CustomerStatus) => {
-  //   return status === "Active" ? "default" : "secondary"; // Active: Greenish, Inactive: Yellowish/Grayish
-  // };
 
   return (
     <div className="space-y-6">
@@ -429,7 +379,7 @@ export function CustomerTable() {
                   {customer.postal_code}
                 </TableCell>
                 <TableCell>{customer.country}</TableCell>
-                <TableCell className="text-center">{10}</TableCell>
+                <TableCell className="text-center">{customer.orders_sum_total}</TableCell>
                 {/* <TableCell>
                   <Badge
                     variant={getStatusBadgeVariant("Active")}
