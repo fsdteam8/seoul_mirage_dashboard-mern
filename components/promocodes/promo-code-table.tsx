@@ -361,6 +361,7 @@ export function PromoCodeTable() {
               <TableHead>Description</TableHead>
               <TableHead>Usage</TableHead>
               <TableHead>Min. Purchase</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
@@ -420,7 +421,8 @@ export function PromoCodeTable() {
                       {pc.description || "-"}
                     </TableCell>
                     <TableCell>{pc.usage_limit}</TableCell>
-                    <TableCell>{pc.amount}</TableCell>
+                    <TableCell>{pc.amount}{pc.type === "percentage" ? "%":""}</TableCell>
+                    <TableCell>{pc.type}</TableCell>
                     <TableCell>
                       <Badge
                         variant={getStatusBadgeVariant(pc.status)}
