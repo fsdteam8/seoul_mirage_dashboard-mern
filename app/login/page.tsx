@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+// import Link from "next/link";
 // import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -149,14 +149,14 @@ export default function LoginPage() {
               Remember me
             </label>
           </div>
-          <div className="text-sm">
+          {/* <div className="text-sm">
             <Link
               href="/reset-password"
               className="font-medium text-brand-pink hover:text-brand-pink/80"
             >
               Forgot password?
             </Link>
-          </div>
+          </div> */}
         </div>
 
         <div>
