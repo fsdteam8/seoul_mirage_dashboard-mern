@@ -11,8 +11,9 @@ export interface PromoCode {
   expiryDate?: string; // ISO string date YYYY-MM-DD
   usage_limit?: number; // 0 or undefined for unlimited
   timesUsed: number;
-  isActive: boolean; // Admin can toggle this
+  isActive?: boolean; // Admin can toggle this
   createdAt: string;
+  status?:string
   updatedAt: string;
   amount: number;
 }

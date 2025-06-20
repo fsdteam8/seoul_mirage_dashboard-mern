@@ -202,8 +202,6 @@ export function CustomerTable() {
 
   const customerData = data?.data;
 
-
-
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
@@ -218,8 +216,6 @@ export function CustomerTable() {
     setCurrentPage(page);
   };
 
-
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-brand-text-dark">
@@ -227,13 +223,17 @@ export function CustomerTable() {
       </h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Customers"   value={
+        <StatCard
+          title="Total Customers"
+          value={
             statchLoading
               ? "Loading..."
               : statchError
               ? "N/A"
               : String(statch?.totalCustomers ?? 0)
-          } icon={Users} />
+          }
+          icon={Users}
+        />
         <StatCard
           title="New Customers"
           value={
@@ -254,7 +254,7 @@ export function CustomerTable() {
               ? "Loading..."
               : statchError
               ? "N/A"
-              : String(statch?.averageOrderValue ?? 0)
+              : `$${(statch?.averageOrderValue ?? "0").slice(0, 3)}`
           }
           icon={DollarSign}
         />
@@ -358,28 +358,30 @@ export function CustomerTable() {
                 </TableRow>
               ))}
             {customerData?.data.map((customer) => (
-              <TableRow key={customer.id}>
+              <TableRow key={customer?.id}>
                 <TableCell className="font-medium text-center">
-                  {customer.id}
+                  {customer?.id}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {customer.full_name} {customer.last_name}
+                    {customer?.full_name} {customer?.last_name}
                   </div>
                 </TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell>{customer.phone}</TableCell>
+                <TableCell>{customer?.email}</TableCell>
+                <TableCell>{customer?.phone}</TableCell>
                 <TableCell className="text-center">
-                  {customer.orders_count}
+                  {customer?.orders_count}
                 </TableCell>
-                <TableCell>{customer.full_address}</TableCell>
-                <TableCell>{customer.city}</TableCell>
-                <TableCell>{customer.state}</TableCell>
+                <TableCell>{customer?.full_address}</TableCell>
+                <TableCell>{customer?.city}</TableCell>
+                <TableCell>{customer?.state}</TableCell>
                 <TableCell className="text-center">
-                  {customer.postal_code}
+                  {customer?.postal_code}
                 </TableCell>
-                <TableCell>{customer.country}</TableCell>
-                <TableCell className="text-center">{customer.orders_sum_total}</TableCell>
+                <TableCell>{customer?.country}</TableCell>
+                <TableCell className="text-center">
+                  {customer?.orders_sum_total}
+                </TableCell>
                 {/* <TableCell>
                   <Badge
                     variant={getStatusBadgeVariant("Active")}

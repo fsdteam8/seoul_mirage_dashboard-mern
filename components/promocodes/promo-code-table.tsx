@@ -421,7 +421,10 @@ export function PromoCodeTable() {
                       {pc.description || "-"}
                     </TableCell>
                     <TableCell>{pc.usage_limit}</TableCell>
-                    <TableCell>{pc.amount}{pc.type === "percentage" ? "%":""}</TableCell>
+                    <TableCell>
+                      {pc.amount}
+                      {pc.type === "percentage" ? "%" : ""}
+                    </TableCell>
                     <TableCell>{pc.type}</TableCell>
                     <TableCell>
                       <Badge
