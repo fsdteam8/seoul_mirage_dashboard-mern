@@ -1,7 +1,12 @@
 "use client";
 
-import { CalendarDays, Package, CreditCard } from "lucide-react";
+import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import html2pdf from "html2pdf.js";
 
+import Image from "next/image";
+import { CalendarDays, Package, CreditCard, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useQuery } from "@tanstack/react-query";
 import { OrderDetailApiResponse } from "@/types/OrderShowDataType";
-import { useSession } from "next-auth/react";
-import Image from "next/image";
 
 interface OrderDetailsProps {
   open: boolean;
@@ -31,6 +33,7 @@ export default function OrderDetails({
 }: OrderDetailsProps) {
   const { data: session } = useSession();
   const token = session?.accessToken ?? "";
+  const printRef = useRef<HTMLDivElement>(null);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -75,8 +78,69 @@ export default function OrderDetails({
   });
 
   const order = data?.data;
-  console.log(error);
-  console.log(isLoading);
+
+  const handlePrint = () => {
+    if (printRef.current) {
+      const printContents = printRef.current.innerHTML;
+      const printWindow = window.open("", "", "height=600,width=800");
+      if (printWindow) {
+        printWindow.document.write("<html><head><title>Order Print</title>");
+        printWindow.document.write("</head><body>");
+        printWindow.document.write(printContents);
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (printRef.current) {
+      html2pdf()
+        .from(printRef.current)
+        .set({
+          margin: 0.5,
+          filename: `order-${order?.id}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        })
+        .save();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Loading Order Details...</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center text-muted-foreground">
+            Fetching order information. Please wait...
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error Loading Order</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center text-red-500">
+            Failed to load order details. Please try again later.
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -90,7 +154,7 @@ export default function OrderDetails({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6">
+        <div ref={printRef} className="grid gap-6">
           {/* Order Info */}
           <Card>
             <CardHeader>
@@ -104,16 +168,65 @@ export default function OrderDetails({
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Order Date</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium">Order Date</p>
+                  <p className="text-muted-foreground">
                     {formatDate(order?.created_at ?? "")}
                   </p>
                 </div>
               </div>
+              <p>Order ID: {order?.id}</p>
+              <p>Type: {order?.type}</p>
+              <p>Shipping Method: {order?.shipping_method}</p>
+              <p>Items: {order?.items}</p>
+              <p>
+                Promocode:{" "}
+                {order?.promocode?.name || order?.promocode_name || "N/A"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Customer Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Customer Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-sm">
+              <p>
+                <strong>Name:</strong> {order?.customer?.full_name}{" "}
+                {order?.customer?.last_name}
+              </p>
+              <p>
+                <strong>Email:</strong> {order?.customer?.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {order?.customer?.phone}
+              </p>
+              <p>
+                <strong>Address:</strong> {order?.customer?.full_address}
+              </p>
+              <p>
+                <strong>City:</strong> {order?.customer?.city}
+              </p>
+              <p>
+                <strong>State:</strong> {order?.customer?.state}
+              </p>
+              <p>
+                <strong>Postal Code:</strong> {order?.customer?.postal_code}
+              </p>
+              <p>
+                <strong>Country:</strong> {order?.customer?.country}
+              </p>
+              <p>
+                <strong>Status:</strong>{" "}
+                <Badge variant="outline">{order?.customer?.status}</Badge>
+              </p>
             </CardContent>
           </Card>
 
@@ -127,19 +240,23 @@ export default function OrderDetails({
                 <div className="flex items-start gap-4">
                   <Image
                     src={
-                      product.image ? `/${product.image}` : "/placeholder.svg"
+                      product.media?.[0]?.file_path
+                        ? `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0].file_path}`
+                        : "/placeholder.svg"
                     }
                     alt={product.name}
                     width={80}
                     height={80}
                     className="rounded-md object-cover"
                   />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex-1 space-y-1 text-sm">
+                    <p className="text-muted-foreground">
                       {product.description}
                     </p>
-                    <Badge variant="secondary">{product.category_id}</Badge>
-                    <p className="text-sm">
+                    <Badge variant="secondary">
+                      Category #{product.category_id}
+                    </Badge>
+                    <p>
                       Price: ${product.price} | Quantity:{" "}
                       {product.pivot?.quantity}
                     </p>
@@ -149,6 +266,10 @@ export default function OrderDetails({
                         parseFloat(product.price) *
                         (product.pivot?.quantity ?? 1)
                       ).toFixed(2)}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Stock Status: {product.status} | Stock Qty:{" "}
+                      {product.stock_quantity}
                     </p>
                   </div>
                 </div>
@@ -164,14 +285,14 @@ export default function OrderDetails({
                 Payment Summary
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span>${order?.shipping_price}</span>
               </div>
               <div className="flex justify-between">
                 <span>Summary</span>
-                <span>{order?.order_summary}</span>
+                <span>{order?.order_summary ?? "N/A"}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold text-lg">
@@ -188,35 +309,29 @@ export default function OrderDetails({
                     variant="outline"
                     className="text-green-600 border-green-600"
                   >
-                    {order?.payment_status ?? ""
-                      ? order &&
-                        order?.payment_status?.charAt(0).toUpperCase() +
-                          order?.payment_status?.slice(1)
+                    {order?.payment_status
+                      ? order.payment_status.charAt(0).toUpperCase() +
+                        order.payment_status.slice(1)
                       : ""}
                   </Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Promocode */}
-          {order?.promocode && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Promocode</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{order.promocode.name}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline">Print Order</Button>
-            <Button variant="outline">Download Invoice</Button>
-            <Button>Track Package</Button>
-          </div>
+        {/* Actions */}
+        <div className="flex gap-2 justify-end pt-4 print:hidden">
+          <Button variant="outline" onClick={handlePrint}>
+            Print Order
+          </Button>
+          <Button variant="outline" onClick={handleDownloadPdf}>
+            Download PDF
+          </Button>
+          {/* <Button>
+            <Truck className="h-4 w-4 mr-2" />
+            Track Package
+          </Button> */}
         </div>
       </DialogContent>
     </Dialog>

@@ -228,7 +228,7 @@ export default function DashboardOverviewPage() {
               ? "Loading..."
               : statchError
               ? "N/A"
-              : `$${statch?.averageOrderValue ?? 0}`
+              : `$${statch?.averageOrderValue?.toFixed(3) ?? 0}`
           }
           icon={Archive}
         />

@@ -100,6 +100,7 @@ export function AddPromoCodeSheet({
       isActive: true,
     },
   });
+  console.log(promoCodeToEdit)
 
   useEffect(() => {
     if (isOpen) {
@@ -114,7 +115,7 @@ export function AddPromoCodeSheet({
             ? new Date(promoCodeToEdit.expiryDate)
             : undefined,
           usageLimit: promoCodeToEdit.usage_limit || 0,
-          isActive: promoCodeToEdit.isActive,
+          isActive: promoCodeToEdit.status === "Active",
         });
       } else {
         (async () => {
