@@ -152,7 +152,7 @@ function EnhancedPagination({
   );
 }
 
-export function OrderTable() {
+export default function OrderTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
