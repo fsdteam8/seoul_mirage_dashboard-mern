@@ -33,7 +33,7 @@ import { useSession } from "next-auth/react";
 import { Product } from "@/types/ProductDataType";
 
 // Define types
-type ProductStatus = "active" | "inactive" | "draft";
+type ProductStatus = "regular" | "coming_soon";
 
 // export interface Product {
 //   id: number;
@@ -60,7 +60,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   vendor: z.string().optional(),
-  // status: z.enum(["active", "inactive", "draft"]),
+  arrival_status: z.enum(["coming_soon", "regular"]),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -120,7 +120,7 @@ export function AddProductSheet({
       price: 0,
       stock_quantity: 0,
       description: "",
-      // status: "active",
+      arrival_status: "regular",
     },
   });
 
@@ -143,8 +143,12 @@ export function AddProductSheet({
               : productToEdit.cost_price ?? undefined,
           stock_quantity: productToEdit.stock_quantity || 0,
           description: productToEdit.description || "",
-          // status: (productToEdit.status || "active") as ProductStatus,
-        };
+          arrival_status:
+            productToEdit.arrival_status === "regular" ||
+            productToEdit.arrival_status === "coming_soon"
+              ? productToEdit.arrival_status
+              : "regular",
+        } as ProductFormValues;
         form.reset(defaultValues);
 
         // Set image previews from media array
@@ -162,7 +166,7 @@ export function AddProductSheet({
           price: 0,
           stock_quantity: 0,
           description: "",
-          status: "active" as ProductStatus,
+          status: "regular" as ProductStatus,
           cost_price: undefined,
         };
         form.reset(defaultValues);
@@ -249,7 +253,7 @@ export function AddProductSheet({
       formData.append("description", data.description || "");
       formData.append("category_id", data.category_id);
       formData.append("price", data.price.toString());
-      // formData.append("status", data.status);
+      formData.append("arrival_status", data.arrival_status);
       formData.append("cost_price", data.cost_price?.toString() || "");
       formData.append("stock_quantity", data.stock_quantity.toString());
 
@@ -416,10 +420,10 @@ export function AddProductSheet({
               )}
             </div>
 
-            {/* <div>
+            <div>
               <Label htmlFor="status">Status</Label>
               <Controller
-                name="status"
+                name="arrival_status"
                 control={form.control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
@@ -427,19 +431,18 @@ export function AddProductSheet({
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="regular">Regular</SelectItem>
+                      <SelectItem value="coming_soon">Coming Soon</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
-              {form.formState.errors.status && (
+              {form.formState.errors.arrival_status && (
                 <p className="text-xs text-red-500 mt-1">
-                  {form.formState.errors.status.message}
+                  {form.formState.errors.arrival_status.message}
                 </p>
               )}
-            </div> */}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
