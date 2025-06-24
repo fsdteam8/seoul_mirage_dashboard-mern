@@ -254,7 +254,7 @@ export function CustomerTable() {
               ? "Loading..."
               : statchError
               ? "N/A"
-              : `$${(statch?.averageOrderValue ?? "0").slice(0, 3)}`
+              : `$${Number(statch?.averageOrderValue ?? 0).toFixed(3)}`
           }
           icon={DollarSign}
         />
