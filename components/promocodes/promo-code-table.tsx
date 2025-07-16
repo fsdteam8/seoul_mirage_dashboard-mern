@@ -193,7 +193,7 @@ export function PromoCodeTable() {
     queryKey: ["promocodeStats"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/promocode-stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes/stats`,
         {
           method: "GET",
           headers: {

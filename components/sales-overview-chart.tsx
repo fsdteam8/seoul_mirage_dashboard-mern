@@ -36,7 +36,7 @@ export function SalesOverviewChart() {
     queryKey: ["order-stats"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/stats`,
         {
           method: "GET",
           headers: {

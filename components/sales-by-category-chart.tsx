@@ -75,7 +75,7 @@ export function SalesByCategoryChart() {
     queryKey: ["category-wise-sales"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/stats`,
         {
           headers: {
             "Content-Type": "application/json",

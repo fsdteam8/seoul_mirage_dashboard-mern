@@ -198,7 +198,7 @@ export default function OrderTable() {
     queryKey: ["orderStats"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats-table`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/stats`,
         {
           method: "GET",
           headers: {
@@ -360,7 +360,7 @@ export default function OrderTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              {/* <TableHead>ID</TableHead> */}
               <TableHead>Order ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Email</TableHead>
@@ -422,10 +422,10 @@ export default function OrderTable() {
               orderData.data?.map((order) => (
                 <TableRow key={order?.id}>
                   <TableCell className="font-medium">{order?.id}</TableCell>
-                  <TableCell className="font-medium">
+                  {/* <TableCell className="font-medium">
                     {order?.uniq_id}
-                  </TableCell>
-                  <TableCell>{order?.customer?.full_name}</TableCell>
+                  </TableCell> */}
+                  <TableCell>{order?.customer?.name}</TableCell>
                   <TableCell>{order?.customer?.email}</TableCell>
                   <TableCell>
                     {order?.created_at

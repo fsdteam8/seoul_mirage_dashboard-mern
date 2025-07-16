@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/login`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
             {
               method: "POST",
               headers: {
@@ -45,6 +45,7 @@ export const authOptions: NextAuthOptions = {
           );
 
           const data = await res.json();
+          console.log(data)
 
           if (!res.ok || !data?.token || !data?.data) {
             throw new Error(data?.message || "Invalid credentials");

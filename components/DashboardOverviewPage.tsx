@@ -84,7 +84,14 @@ export default function DashboardOverviewPage() {
     queryKey: ["TopProducts"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/best-selling-products?paginate_count=5`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/best-selling-products?paginate_count=5`
+        , {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+
       );
       if (!res.ok) throw new Error("Failed to fetch products");
       return res.json();
@@ -99,7 +106,7 @@ export default function DashboardOverviewPage() {
     queryKey: ["dashboardOverview"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/order-stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/stats`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -133,14 +140,15 @@ export default function DashboardOverviewPage() {
     },
   });
 
+
   const topProducts = (data?.data?.data ?? []).map((product) => ({
-    id: product.id,
-    name: product.name,
-    unitsSold: `${product.stock_quantity} Stock Quantity`,
-    price: `$${parseFloat(product.price).toFixed(2)}`,
-    sales: `${product.sales} Sales`,
-    image: product.media[0]
-      ? `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0].file_path}`
+    id: product?.id,
+    name: product?.name,
+    unitsSold: `${product?.stock_quantity} Stock Quantity`,
+    price: `$${parseFloat(product?.price).toFixed(2)}`,
+    sales: `${product?.sales} Sales`,
+    image: product?.media[0]
+      ? `${product?.media[0]?.file_path}`
       : "/placeholder.svg",
   }));
 
@@ -169,15 +177,17 @@ export default function DashboardOverviewPage() {
     }
 
     return {
-      id: order.uniq_id,
-      customer: `${order.customer.full_name} ${order.customer.last_name}`,
-      amount: `$${parseFloat(order.total).toFixed(2)}`,
-      status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+      id: order?.id,
+      customer: `${order?.customer?.name}`,
+      amount: `$${parseFloat(order?.total).toFixed(2)}`,
+      status: order?.status?.charAt(0).toUpperCase() + order?.status?.slice(1),
       icon,
       statusColor,
       bgColor,
     };
   });
+
+console.log(recentOrders)
 
   return (
     <div className="space-y-6">
@@ -193,8 +203,8 @@ export default function DashboardOverviewPage() {
             statchLoading
               ? "Loading..."
               : statchError
-              ? "N/A"
-              : `$${statch?.revenue ?? 0}`
+                ? "N/A"
+                : `$${statch?.revenue ?? 0}`
           }
           icon={CircleDollarSign}
         />
@@ -204,8 +214,8 @@ export default function DashboardOverviewPage() {
             statchLoading
               ? "Loading..."
               : statchError
-              ? "N/A"
-              : String(statch?.totalOrders ?? 0)
+                ? "N/A"
+                : String(statch?.totalOrders ?? 0)
           }
           icon={ShoppingBag}
         />
@@ -215,8 +225,8 @@ export default function DashboardOverviewPage() {
             statchLoading
               ? "Loading..."
               : statchError
-              ? "N/A"
-              : String(statch?.customerCount ?? 0)
+                ? "N/A"
+                : String(statch?.customerCount ?? 0)
           }
           icon={Users}
           description="Active customers"
@@ -227,8 +237,8 @@ export default function DashboardOverviewPage() {
             statchLoading
               ? "Loading..."
               : statchError
-              ? "N/A"
-              : `$${statch?.averageOrderValue?.toFixed(3) ?? 0}`
+                ? "N/A"
+                : `$${statch?.averageOrderValue?.toFixed(3) ?? 0}`
           }
           icon={Archive}
         />

@@ -83,7 +83,7 @@ export function AddCategorySheet({
         });
         setImageUrl(
           categoryToEdit.image
-            ? `${process.env.NEXT_PUBLIC_API_URL}/${categoryToEdit.image}`
+            ? categoryToEdit.image
             : ""
         );
         setImageFile(null);
@@ -109,10 +109,10 @@ export function AddCategorySheet({
 
       const res = await fetch(
         categoryToEdit
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${categoryToEdit.id}?_method=PUT`
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/categories/${categoryToEdit.id}`
           : `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
         {
-          method: "POST",
+          method: categoryToEdit ? "PUT" : "POST",
           headers: {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
@@ -240,7 +240,7 @@ export function AddCategorySheet({
                   setImageFile(null);
                   if (categoryToEdit?.image) {
                     setImageUrl(
-                      `${process.env.NEXT_PUBLIC_API_URL}/${categoryToEdit.image}`
+                      categoryToEdit.image
                     );
                   } else {
                     setImageUrl("");

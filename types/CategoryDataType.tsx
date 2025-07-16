@@ -4,8 +4,8 @@ export type Category = {
   description: string;
   type: string;
   image: string; // required now
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   // removed productCount as it's not in new data
 };
 

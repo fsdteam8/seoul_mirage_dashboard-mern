@@ -50,7 +50,8 @@ export interface PromoCode {
 
 export interface Customer {
   id: number;
-  full_name: string;
+  full_name?: string;
+  name?:string
   last_name: string;
   email: string;
   phone: string;

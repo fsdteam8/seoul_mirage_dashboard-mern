@@ -5,8 +5,8 @@ export interface Promocode {
 
 export interface Customer {
   id: number;
-  full_name: string;
-  last_name: string;
+  full_name?: string;
+  last_name?: string;
   email: string;
   phone: string;
   full_address: string;
@@ -16,6 +16,7 @@ export interface Customer {
   country: string;
   created_at: string;
   updated_at: string;
+  name:string
 }
 
 export interface Order {

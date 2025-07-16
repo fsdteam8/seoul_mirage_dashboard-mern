@@ -152,10 +152,10 @@ export function AddPromoCodeSheet({
 
         const res = await fetch(
           promoCodeToEdit
-            ? `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes/${promoCodeToEdit.id}?_method=PUT`
+            ? `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes/${promoCodeToEdit.id}`
             : `${process.env.NEXT_PUBLIC_API_URL}/api/promocodes`,
           {
-            method: "POST",
+            method: promoCodeToEdit ? "PUT" : "POST",
             headers: {
               Accept: "multipart/form-data",
               ...(token && { Authorization: `Bearer ${token}` }),

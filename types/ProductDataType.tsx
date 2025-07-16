@@ -20,8 +20,8 @@ export interface Product {
   status: string;
   cost_price: string;
   stock_quantity: number;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   media: ProductMedia[];
   category: ProductCategory;
 }

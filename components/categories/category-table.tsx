@@ -131,11 +131,11 @@ export function CategoryTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const session = useSession();
-  interface SessionUser {
-    token?: string;
-    // add other user properties if needed
-  }
-  const token = (session?.data?.user as SessionUser)?.token || "";
+  // interface SessionUser {
+  //   token?: string;
+  //   // add other user properties if needed
+  // }
+  const token = session.data?.accessToken || "";
   const queryClient = useQueryClient();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
@@ -165,7 +165,6 @@ export function CategoryTable() {
       return res.json();
     },
   });
-
   const categories = data?.data?.data;
 
   const mutationDelete = useMutation({
@@ -317,8 +316,8 @@ export function CategoryTable() {
                   <TableCell className="text-sm text-gray-600">
                     {category.type}
                   </TableCell>
-                  <TableCell>{category.created_at}</TableCell>
-                  <TableCell>{category.updated_at}</TableCell>
+                  <TableCell>{category.createdAt}</TableCell>
+                  <TableCell>{category.updatedAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

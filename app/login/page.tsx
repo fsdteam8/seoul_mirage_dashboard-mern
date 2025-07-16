@@ -44,7 +44,7 @@ export default function LoginPage() {
         email: data.email,
         password: data.password,
         redirect: false,
-        callbackUrl:"/dashboard"
+        callbackUrl: "/dashboard"
       });
       if (!res?.ok) {
         toast({
@@ -56,7 +56,7 @@ export default function LoginPage() {
       }
 
       // add rotue push 
-          
+
       window.location.href = res.url || "/dashboard";
       toast({
         title: "Login Successful",

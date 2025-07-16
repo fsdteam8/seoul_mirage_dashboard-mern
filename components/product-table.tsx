@@ -148,11 +148,10 @@ function EnhancedPagination({
               size="sm"
               onClick={() => onPageChange(pageNum)}
               disabled={isLoading}
-              className={`h-9 w-9 p-0 ${
-                currentPage === pageNum
+              className={`h-9 w-9 p-0 ${currentPage === pageNum
                   ? "bg-gray-900 text-white hover:bg-gray-800"
                   : "hover:bg-gray-50"
-              }`}
+                }`}
             >
               {pageNum}
             </Button>
@@ -240,7 +239,7 @@ export function ProductTable() {
     queryKey: ["productStats", currentPage, debouncedSearchTerm],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products-stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/stats`,
         {
           method: "GET",
           headers: {
@@ -370,7 +369,7 @@ export function ProductTable() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const categories = Array.from(new Set(products.map((p) => p.category.name)));
+  const categories = Array.from(new Set(products.map((p) => p?.category?.name)));
 
   if (error) {
     return (
@@ -421,8 +420,8 @@ export function ProductTable() {
                 productStatsLoading
                   ? "Loading..."
                   : productStatsError
-                  ? "N/A"
-                  : String(productStats?.totalProducts ?? 0)
+                    ? "N/A"
+                    : String(productStats?.totalProducts ?? 0)
               }
               icon={Package}
             />
@@ -432,8 +431,8 @@ export function ProductTable() {
                 productStatsLoading
                   ? "Loading..."
                   : productStatsError
-                  ? "N/A"
-                  : String(productStats?.lowStock ?? 0)
+                    ? "N/A"
+                    : String(productStats?.lowStock ?? 0)
               }
               icon={AlertTriangle}
             />
@@ -443,8 +442,8 @@ export function ProductTable() {
                 productStatsLoading
                   ? "Loading..."
                   : productStatsError
-                  ? "N/A"
-                  : String(productStats?.outOfStock ?? 0)
+                    ? "N/A"
+                    : String(productStats?.outOfStock ?? 0)
               }
               icon={PackageX}
             />
@@ -454,8 +453,8 @@ export function ProductTable() {
                 productStatsLoading
                   ? "Loading..."
                   : productStatsError
-                  ? "N/A"
-                  : String(productStats?.revenue ?? 0)
+                    ? "N/A"
+                    : String(productStats?.revenue ?? 0)
               }
               icon={TrendingUp}
             />
@@ -480,8 +479,8 @@ export function ProductTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Categories</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
+            {categories.map((cat,i) => (
+              <SelectItem key={i} value={cat}>
                 {cat}
               </SelectItem>
             ))}
@@ -569,66 +568,66 @@ export function ProductTable() {
             )}
             {!queryLoading &&
               products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">#{product.id}</TableCell>
+                <TableRow key={product?.id}>
+                  <TableCell className="font-medium">#{product?.id}</TableCell>
                   <TableCell>
                     <Image
                       src={
-                        `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0]?.file_path}` ||
-                        "/placeholder.svg?height=40&width=40"
+                        product?.media?.length > 0
+                          ? product?.media[0]?.file_path
+                          : product?.image || "/placeholder.svg?height=40&width=40"
                       }
-                      alt={product.name}
+                      alt={product?.name}
                       width={40}
                       height={40}
                       className="rounded-md object-cover"
                     />
                   </TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">
-                    {product.name}
+                    {product?.name}
                   </TableCell>
                   <TableCell className="max-w-[250px] truncate text-gray-600">
-                    {product.description}
+                    {product?.description}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{product.category.name}</Badge>
+                    <Badge variant="outline">{product?.category?.name}</Badge>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {formatPrice(product.price)}
+                    {formatPrice(product?.price)}
                   </TableCell>
                   <TableCell className="text-gray-600">
-                    {formatPrice(product.cost_price)}
+                    {formatPrice(product?.cost_price)}
                   </TableCell>
                   <TableCell>
                     <span
-                      className={`font-medium ${
-                        product.stock_quantity < 10
+                      className={`font-medium ${product?.stock_quantity < 10
                           ? "text-red-600"
-                          : product.stock_quantity < 50
-                          ? "text-yellow-600"
-                          : "text-green-600"
-                      }`}
+                          : product?.stock_quantity < 50
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
                     >
-                      {product.stock_quantity}
+                      {product?.stock_quantity}
                     </span>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={getStatusBadgeVariant(product.status)}
+                      variant={getStatusBadgeVariant(product?.status)}
                       className={
-                        product.status === "active"
+                        product?.status === "active"
                           ? "bg-green-100 text-green-700 border-green-200"
-                          : product.status === "low_stock"
-                          ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          : product.status === "out_of_stock"
-                          ? "bg-red-100 text-red-700 border-red-200"
-                          : "bg-gray-100 text-gray-700 border-gray-200"
+                          : product?.status === "low_stock"
+                            ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                            : product?.status === "out_of_stock"
+                              ? "bg-red-100 text-red-700 border-red-200"
+                              : "bg-gray-100 text-gray-700 border-gray-200"
                       }
                     >
-                      {getStatusDisplay(product.status)}
+                      {getStatusDisplay(product?.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-gray-600">
-                    {formatDate(product.created_at)}
+                    {formatDate(product?.createdAt)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -645,7 +644,7 @@ export function ProductTable() {
                           <Edit2 className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDeleteClick(String(product.id))}
+                          onClick={() => handleDeleteClick(String(product?.id))}
                           className="text-red-600 hover:!text-red-600 hover:!bg-red-50"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
