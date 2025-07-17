@@ -149,8 +149,8 @@ function EnhancedPagination({
               onClick={() => onPageChange(pageNum)}
               disabled={isLoading}
               className={`h-9 w-9 p-0 ${currentPage === pageNum
-                  ? "bg-gray-900 text-white hover:bg-gray-800"
-                  : "hover:bg-gray-50"
+                ? "bg-gray-900 text-white hover:bg-gray-800"
+                : "hover:bg-gray-50"
                 }`}
             >
               {pageNum}
@@ -181,7 +181,7 @@ export function ProductTable() {
   const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
-  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(null);
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null | number>(null);
   const session = useSession();
   const token = session?.data?.accessToken ?? "";
 
@@ -274,7 +274,8 @@ export function ProductTable() {
 
   // Handle product deletion
   const mutationDelete = useMutation({
-    mutationFn: async (productId: number) => {
+    mutationFn: async (productId: string) => {
+      console.log(productId)
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
         {
@@ -309,13 +310,14 @@ export function ProductTable() {
   });
 
   const handleDeleteClick = (productId: string) => {
+    console.log(productId)
     setProductIdToDelete(productId);
     setIsModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
-    if (productIdToDelete) {
-      mutationDelete.mutate(Number(productIdToDelete));
+    if (productIdToDelete !== null) {
+      mutationDelete.mutate(String(productIdToDelete));
       setProductIdToDelete(null);
       setIsModalOpen(false);
     }
@@ -479,7 +481,7 @@ export function ProductTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Categories</SelectItem>
-            {categories.map((cat,i) => (
+            {categories.map((cat, i) => (
               <SelectItem key={i} value={cat}>
                 {cat}
               </SelectItem>
@@ -601,10 +603,10 @@ export function ProductTable() {
                   <TableCell>
                     <span
                       className={`font-medium ${product?.stock_quantity < 10
-                          ? "text-red-600"
-                          : product?.stock_quantity < 50
-                            ? "text-yellow-600"
-                            : "text-green-600"
+                        ? "text-red-600"
+                        : product?.stock_quantity < 50
+                          ? "text-yellow-600"
+                          : "text-green-600"
                         }`}
                     >
                       {product?.stock_quantity}
