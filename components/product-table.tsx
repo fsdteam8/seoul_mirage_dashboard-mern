@@ -298,6 +298,7 @@ export function ProductTable() {
         title: "Product deleted successfully",
         description: "The product has been removed from your inventory.",
       });
+       setIsModalOpen(false);
       refetch();
     },
     onError: (error: Error) => {
@@ -319,7 +320,7 @@ export function ProductTable() {
     if (productIdToDelete !== null) {
       mutationDelete.mutate(String(productIdToDelete));
       setProductIdToDelete(null);
-      setIsModalOpen(false);
+     
     }
   };
 
