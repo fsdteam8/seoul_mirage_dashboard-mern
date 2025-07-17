@@ -960,7 +960,7 @@ export function AddProductSheet({
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Select category" />
-                      Facet normal
+                             
                     </SelectTrigger>
                     <SelectContent>
                       {productCategories.map(

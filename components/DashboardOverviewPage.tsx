@@ -21,10 +21,10 @@ import { useQuery } from "@tanstack/react-query";
 import { OrdersResponse } from "@/types/RecentOrderDataType";
 import { useSession } from "next-auth/react";
 import { SalesReportApiResponse } from "@/types/DashboardDataType";
-
+                                                            
 interface Media {
-  id: number;
-  product_id: number;
+  id: number;                                        
+  product_id: number;    
   file_path: string;
   created_at: string;
   updated_at: string;
