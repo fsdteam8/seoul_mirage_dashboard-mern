@@ -102,11 +102,10 @@ function EnhancedPagination({
               size="sm"
               onClick={() => onPageChange(pageNum)}
               disabled={isLoading}
-              className={`h-9 w-9 p-0 ${
-                currentPage === pageNum
-                  ? "bg-gray-900 text-white hover:bg-gray-800"
-                  : "hover:bg-gray-50"
-              }`}
+              className={`h-9 w-9 p-0 ${currentPage === pageNum
+                ? "bg-gray-900 text-white hover:bg-gray-800"
+                : "hover:bg-gray-50"
+                }`}
             >
               {pageNum}
             </Button>
@@ -148,8 +147,7 @@ export function CategoryTable() {
     queryKey: ["categories", currentPage, searchTerm],
     queryFn: async () => {
       const res = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL
+        `${process.env.NEXT_PUBLIC_API_URL
         }/api/categories?page=${currentPage}&search=${encodeURIComponent(
           searchTerm
         )}`,
@@ -228,7 +226,7 @@ export function CategoryTable() {
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const totalCount = data?.total || 0;
+  const totalCount = data?.data?.pagination?.total || 0;
 
   if (error)
     return (
@@ -283,9 +281,9 @@ export function CategoryTable() {
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
+              {/* <TableHead>Description</TableHead> */}
               <TableHead>Type</TableHead>
-              <TableHead>Created At</TableHead>
+              {/* <TableHead>Created At</TableHead> */}
               <TableHead>Updated At</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
@@ -306,18 +304,38 @@ export function CategoryTable() {
                   </TableRow>
                 ))}
             {!isLoading &&
-              (categories ?? []).map((category) => (
+              (categories ?? []).map((category, i) => (
                 <TableRow key={category.id}>
-                  <TableCell>{category.id}</TableCell>
+                  <TableCell>{i + 1}</TableCell>
                   <TableCell>{category.name}</TableCell>
-                  <TableCell className="max-w-xs truncate text-sm text-gray-600">
+                  {/* <TableCell className="max-w-xs truncate text-sm text-gray-600">
                     {category.description?.slice(0, 30) || "-"}...
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell className="text-sm text-gray-600">
                     {category.type}
                   </TableCell>
-                  <TableCell>{category.createdAt}</TableCell>
-                  <TableCell>{category.updatedAt}</TableCell>
+                  {/* <TableCell>{category.createdAt}</TableCell>
+                  <TableCell>{category.updatedAt}</TableCell> */}
+                  {/* <TableCell>
+                    {new Date(category.createdAt).toLocaleString(undefined, {
+                      month: "short",   // "Jul"
+                      day: "2-digit",   // "18"
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,     // Shows AM/PM based on locale
+                    })}
+                  </TableCell> */}
+                  <TableCell>
+                    {new Date(category.updatedAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -346,12 +364,12 @@ export function CategoryTable() {
           </TableBody>
         </Table>
 
-        {data && data.total_pages > 1 && (
+        {data && data.data.pagination.last_page > 1 && (
           <EnhancedPagination
-            currentPage={data.current_page}
-            totalPages={data.total_pages}
-            totalCount={data.total}
-            itemsPerPage={data.per_page}
+            currentPage={data.data.pagination.current_page}
+            totalPages={data.data.pagination.last_page}
+            totalCount={data.data.pagination.total}
+            itemsPerPage={data.data.pagination.per_page}
             isLoading={isLoading}
             onPageChange={handlePageChange}
           />

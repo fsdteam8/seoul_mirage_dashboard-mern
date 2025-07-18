@@ -136,7 +136,7 @@ export function CustomerTable() {
   const session = useSession();
   const token = session?.data?.accessToken ?? "";
 
-  const { data, isLoading } = useQuery<CustomerApiResponse>({
+  const { data, isLoading,isError } = useQuery<CustomerApiResponse>({
     queryKey: ["customers", currentPage, searchTerm, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -164,21 +164,21 @@ export function CustomerTable() {
       return res.json();
     },
   });
-
-  const {
-    data: statch,
-    error: statchError,
-    isLoading: statchLoading,
-  } = useQuery({
-    queryKey: ["customerStats"],
-    queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/customers-stats`
-      );
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      return res.json();
-    },
-  });
+// console.log(data?.stats)
+  // const {
+  //   data: statch,
+  //   error: statchError,
+  //   isLoading: statchLoading,
+  // } = useQuery({
+  //   queryKey: ["customerStats"],
+  //   queryFn: async () => {
+  //     const res = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/api/customers-stats`
+  //     );
+  //     if (!res.ok) throw new Error("Failed to fetch stats");
+  //     return res.json();
+  //   },
+  // });
 
   const customerData = data?.data;
 
@@ -206,22 +206,22 @@ export function CustomerTable() {
         <StatCard
           title="Total Customers"
           value={
-            statchLoading
+            isLoading
               ? "Loading..."
-              : statchError
+              : isError
               ? "N/A"
-              : String(statch?.totalCustomers ?? 0)
+              : String(data?.data?.stats?.totalCustomers ?? 0)
           }
           icon={Users}
         />
         <StatCard
           title="New Customers"
           value={
-            statchLoading
+            isLoading
               ? "Loading..."
-              : statchError
+              : isError
               ? "N/A"
-              : String(statch?.new_customers ?? 0)
+              : String(data?.data?.stats?.new_customers ?? 0)
           }
           icon={UserPlus}
           description="(Last 30 days)"
@@ -229,11 +229,11 @@ export function CustomerTable() {
         <StatCard
           title="Avg. Order Value"
           value={
-            statchLoading
+            isLoading
               ? "Loading..."
-              : statchError
+              : isError
               ? "N/A"
-              : `$${Number(statch?.averageOrderValue ?? 0).toFixed(3)}`
+              : `$${Number(data?.data?.stats?.averageOrderValue ?? 0).toFixed(3)}`
           }
           icon={DollarSign}
         />
@@ -271,7 +271,7 @@ export function CustomerTable() {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Customer</TableHead>
+              <TableHead>Namew</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Orders</TableHead>
@@ -295,13 +295,13 @@ export function CustomerTable() {
                   </TableRow>
                 ))
               : customerData?.data?.length
-              ? customerData.data.map((customer) => (
-                  <TableRow key={customer?.id}>
+              ? customerData?.data?.map((customer,i) => (
+                  <TableRow key={customer?._id}>
                     <TableCell className="text-center">
-                      {customer?.id}
+                      {i + 1}
                     </TableCell>
                     <TableCell>
-                      {customer?.full_name} {customer?.last_name}
+                      {customer?.name}
                     </TableCell>
                     <TableCell>{customer?.email}</TableCell>
                     <TableCell>{customer?.phone}</TableCell>
@@ -330,12 +330,12 @@ export function CustomerTable() {
           </TableBody>
         </Table>
 
-        {data && data.total_pages > 1 && (
+        {data && data.data.pagination.last_page > 1 && (
           <EnhancedPagination
-            currentPage={data.current_page}
-            totalPages={data.total_pages}
-            totalCount={data.total}
-            itemsPerPage={data.per_page}
+            currentPage={data.data.pagination.current_page}
+            totalPages={data.data.pagination.last_page}
+            totalCount={data.data.pagination.total}
+            itemsPerPage={data.data.pagination.per_page}
             onPageChange={handlePageChange}
           />
         )}

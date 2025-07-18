@@ -24,7 +24,7 @@ export default function StatusCell({
   orderId,
   initialStatus,
 }: {
-  orderId: number;
+  orderId: string;
   initialStatus: StatusType;
 }) {
   const [open, setOpen] = useState(false);
