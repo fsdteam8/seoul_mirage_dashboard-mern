@@ -80,7 +80,7 @@ export async function addPromoCodeAction(
   const newPromoCode: PromoCode = {
     ...promoCodeData,
     id: newId,
-    timesUsed: 0,
+    // timesUsed: 0,
     createdAt: currentDate,
     updatedAt: currentDate,
   };
@@ -112,7 +112,7 @@ export async function updatePromoCodeAction(
   if (
     promoCodeData.name &&
     promoCodeData.name.toLowerCase() !==
-      promoCodesStore[promoCodeIndex].name.toLowerCase()
+    promoCodesStore[promoCodeIndex].name.toLowerCase()
   ) {
     if (
       promoCodesStore.some(
@@ -159,9 +159,8 @@ export async function togglePromoCodeStatusAction(
   revalidatePath("/dashboard/promocodes");
   return {
     success: true,
-    message: `Promo code ${
-      isActive ? "activated" : "deactivated"
-    } successfully. `,
+    message: `Promo code ${isActive ? "activated" : "deactivated"
+      } successfully. `,
   };
 }
 

@@ -185,6 +185,7 @@ export function PromoCodeTable() {
       return res.json();
     },
   });
+
   const {
     data: promostats,
     isLoading: statsLoading,
@@ -459,12 +460,12 @@ export function PromoCodeTable() {
           </TableBody>
         </Table>
 
-        {data && data.total_pages > 1 && (
+        {data && data?.data?.pagination?.last_page > 1 && (
           <EnhancedPagination
-            currentPage={data?.current_page}
-            totalPages={data?.total_pages}
-            totalCount={data?.total}
-            itemsPerPage={data?.per_page}
+            currentPage={data?.data?.pagination?.current_page}
+            totalPages={data?.data.pagination.last_page}
+            totalCount={data?.data.pagination.total}
+            itemsPerPage={data?.data.pagination.per_page}
             isLoading={isLoading}
             onPageChange={handlePageChange}
           />

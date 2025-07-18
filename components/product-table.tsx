@@ -177,6 +177,7 @@ export function ProductTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [productFilter, setProductFilter] = useState("regular");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -201,6 +202,7 @@ export function ProductTable() {
       debouncedSearchTerm,
       categoryFilter,
       statusFilter,
+      productFilter
     ],
     queryFn: async () => {
       const queryParams = new URLSearchParams({
@@ -208,6 +210,7 @@ export function ProductTable() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(categoryFilter !== "All" && { category: categoryFilter }),
         ...(statusFilter !== "All Status" && { status: statusFilter }),
+        ...(productFilter !== "All Status" && { arrival_status: productFilter }),
       });
 
       const res = await fetch(
@@ -263,6 +266,10 @@ export function ProductTable() {
     setCurrentPage(1);
   };
 
+  const handelSetProductStatus = (value: string) => {
+    setProductFilter(value);
+    setCurrentPage(1);
+  };
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
@@ -298,7 +305,7 @@ export function ProductTable() {
         title: "Product deleted successfully",
         description: "The product has been removed from your inventory.",
       });
-       setIsModalOpen(false);
+      setIsModalOpen(false);
       refetch();
     },
     onError: (error: Error) => {
@@ -320,7 +327,7 @@ export function ProductTable() {
     if (productIdToDelete !== null) {
       mutationDelete.mutate(String(productIdToDelete));
       setProductIdToDelete(null);
-     
+
     }
   };
 
@@ -384,6 +391,7 @@ export function ProductTable() {
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6">
@@ -489,6 +497,18 @@ export function ProductTable() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={productFilter} onValueChange={handelSetProductStatus}>
+          <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
+            <SelectValue placeholder="Regular" />
+          </SelectTrigger>
+          <SelectContent>
+            {/* <SelectItem value="All">Regular OR Coming</SelectItem> */}
+            <SelectItem value={"regular"}>Regular</SelectItem>
+            <SelectItem value={"coming_soon"}>Coming Soon</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={statusFilter} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
             <SelectValue placeholder="All Status" />
@@ -570,9 +590,9 @@ export function ProductTable() {
               </TableRow>
             )}
             {!queryLoading &&
-              products.map((product) => (
+              products.map((product, i) => (
                 <TableRow key={product?.id}>
-                  <TableCell className="font-medium">#{product?.id}</TableCell>
+                  <TableCell className="font-medium">{i + 1}</TableCell>
                   <TableCell>
                     <Image
                       src={
@@ -618,12 +638,12 @@ export function ProductTable() {
                       variant={getStatusBadgeVariant(product?.status)}
                       className={
                         product?.status === "active"
-                          ? "bg-green-100 text-green-700 border-green-200"
+                          ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700 hover:border-green-200 cursor-default"
                           : product?.status === "low_stock"
-                            ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                            ? "bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100 hover:text-yellow-700 hover:border-yellow-200 cursor-default"
                             : product?.status === "out_of_stock"
-                              ? "bg-red-100 text-red-700 border-red-200"
-                              : "bg-gray-100 text-gray-700 border-gray-200"
+                              ? "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700 hover:border-red-200 cursor-default"
+                              : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-200 cursor-default"
                       }
                     >
                       {getStatusDisplay(product?.status)}
@@ -660,12 +680,12 @@ export function ProductTable() {
           </TableBody>
         </Table>
 
-        {data && data?.total_pages > 1 && (
+        {data && data?.data.pagination.last_page > 1 && (
           <EnhancedPagination
-            currentPage={data?.current_page}
-            totalPages={data?.total_pages}
-            totalCount={data?.total}
-            itemsPerPage={data?.per_page}
+            currentPage={data?.data.pagination.current_page}
+            totalPages={data?.data.pagination.last_page}
+            totalCount={data?.data.pagination.total}
+            itemsPerPage={data?.data.pagination.per_page}
             isLoading={queryLoading}
             onPageChange={handlePageChange}
           />

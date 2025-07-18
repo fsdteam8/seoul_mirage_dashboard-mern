@@ -232,44 +232,44 @@ export default function OrderDetails({
 
           {/* Product Details */}
           {order?.products?.map((product) => (
-            <Card key={product.id}>
+            <Card key={product?.id}>
               <CardHeader>
-                <CardTitle>Product: {product.name}</CardTitle>
+                <CardTitle>Product: {product?.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-start gap-4">
                   <Image
                     src={
-                      product.media?.[0]?.file_path
-                        ? `${process.env.NEXT_PUBLIC_API_URL}/${product.media[0].file_path}`
+                      product?.media?.[0]?.file_path
+                        ? `${product?.media[0].file_path}`
                         : "/placeholder.svg"
                     }
-                    alt={product.name}
+                    alt={product?.name}
                     width={80}
                     height={80}
                     className="rounded-md object-cover"
                   />
                   <div className="flex-1 space-y-1 text-sm">
                     <p className="text-muted-foreground">
-                      {product.description}
+                      {product?.description}
                     </p>
                     <Badge variant="secondary">
-                      Category #{product.category_id}
+                      Category #{product?.category_id}
                     </Badge>
                     <p>
-                      Price: ${product.price} | Quantity:{" "}
-                      {product.pivot?.quantity}
+                      Price: ${product?.price} | Quantity:{" "}
+                      {product?.pivot?.quantity}
                     </p>
                     <p className="font-semibold">
                       Total: $
                       {(
-                        parseFloat(product.price) *
-                        (product.pivot?.quantity ?? 1)
+                        parseFloat(product?.price) *
+                        (product?.pivot?.quantity ?? 1)
                       ).toFixed(2)}
                     </p>
                     <p className="text-muted-foreground">
-                      Stock Status: {product.status} | Stock Qty:{" "}
-                      {product.stock_quantity}
+                      Stock Status: {product?.status} | Stock Qty:{" "}
+                      {product?.stock_quantity}
                     </p>
                   </div>
                 </div>

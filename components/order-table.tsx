@@ -419,17 +419,17 @@ export default function OrderTable() {
               ))}
             {!isLoading &&
               orderData &&
-              orderData.data?.map((order) => (
+              orderData.data?.map((order,i) => (
                 <TableRow key={order?.id}>
-                  <TableCell className="font-medium">{order?.id}</TableCell>
+                  <TableCell className="font-medium">{i + 1}</TableCell>
                   {/* <TableCell className="font-medium">
                     {order?.uniq_id}
                   </TableCell> */}
                   <TableCell>{order?.customer?.name}</TableCell>
                   <TableCell>{order?.customer?.email}</TableCell>
                   <TableCell>
-                    {order?.created_at
-                      ? new Date(order.created_at).toLocaleString("en-GB", {
+                    {order?.createdAt
+                      ? new Date(order.createdAt).toLocaleString("en-GB", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
@@ -496,7 +496,7 @@ export default function OrderTable() {
                         <DropdownMenuItem
                           onClick={() => {
                             setIsOpen(true);
-                            setSingelOrder(order?.uniq_id);
+                            setSingelOrder(order?.id);
                           }}
                         >
                           <Eye className="mr-2 h-4 w-4" /> View Details
@@ -513,12 +513,12 @@ export default function OrderTable() {
           setOpen={setIsOpen}
           open={isOpen}
         />
-        {data && data?.total_pages > 1 && (
+        {data && data?.data.pagination.last_page > 1 && (
           <EnhancedPagination
-            currentPage={data.current_page}
-            totalPages={data.total_pages}
-            totalCount={data.total}
-            itemsPerPage={data.per_page}
+            currentPage={data.data.pagination.current_page}
+            totalPages={data.data.pagination.last_page}
+            totalCount={data.data.pagination.total}
+            itemsPerPage={data.data.pagination.per_page}
             onPageChange={handlePageChange}
           />
         )}

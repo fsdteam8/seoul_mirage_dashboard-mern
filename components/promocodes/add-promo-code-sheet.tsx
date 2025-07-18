@@ -75,7 +75,7 @@ type PromoCodeFormValues = z.infer<typeof promoCodeSchema>;
 interface AddPromoCodeSheetProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  promoCodeToEdit?: PromoCode | null;
+  promoCodeToEdit?: PromoCode | null ;
 }
 
 export function AddPromoCodeSheet({
