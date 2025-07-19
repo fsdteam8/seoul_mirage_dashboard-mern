@@ -316,7 +316,7 @@ export function CustomerTable() {
                     </TableCell>
                     <TableCell>{customer?.country}</TableCell>
                     <TableCell className="text-center">
-                      {customer?.orders_sum_total}
+                      {customer?.orders_sum_total.toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))
