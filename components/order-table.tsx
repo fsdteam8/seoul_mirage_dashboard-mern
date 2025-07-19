@@ -162,7 +162,7 @@ export default function OrderTable() {
   const session = useSession();
   const token = session?.data?.accessToken ?? {};
   // const allStatuses = ["Delivered", "Shipped", "Processing", "Cancelled"];
-  const { data, error, isLoading } = useQuery<OrdersApiResponse>({
+  const { data,  isLoading } = useQuery<OrdersApiResponse>({
     queryKey: ["orders", currentPage, searchTerm, paymentFilter, statusFilter],
     queryFn: async () => {
       // Construct query parameters
@@ -212,8 +212,7 @@ export default function OrderTable() {
     },
   });
 
-  console.log(error);
-  console.log(orderData?.data);
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
