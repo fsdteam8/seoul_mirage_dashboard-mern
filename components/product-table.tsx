@@ -309,6 +309,7 @@ export function ProductTable() {
       refetch();
     },
     onError: (error: Error) => {
+      console.log(error)
       toast({
         title: "Error deleting product",
         description: error.message,
@@ -516,8 +517,8 @@ export function ProductTable() {
           <SelectContent>
             <SelectItem value="All Status">All Status</SelectItem>
             {/* <SelectItem value="active">Active</SelectItem> */}
-            <SelectItem value="low stock">Low Stock</SelectItem>
-            <SelectItem value="out of stock">Out of Stock</SelectItem>
+            <SelectItem value="low_stock">Low Stock</SelectItem>
+            <SelectItem value="out_of_stock">Out of Stock</SelectItem>
             {/* <SelectItem value="available">Inactive</SelectItem> */}
           </SelectContent>
         </Select>

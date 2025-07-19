@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 type StatusType = "pending" | "cancelled" | "delivered";
 
@@ -30,7 +31,7 @@ export default function StatusCell({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<StatusType>(initialStatus);
   const queryClient = useQueryClient();
-
+  const session = useSession()
   const { mutate, isPending } = useMutation({
     mutationFn: async (newStatus: StatusType) => {
       const res = await fetch(
@@ -39,7 +40,7 @@ export default function StatusCell({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${session.data?.accessToken}`,
           },
           body: JSON.stringify({ status: newStatus }),
         }

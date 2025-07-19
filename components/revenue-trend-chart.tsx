@@ -56,7 +56,7 @@ export function RevenueTrendChart() {
   const revenueData =
     orderStats?.monthly_sales.map((item) => ({
       month: item.month,
-      revenue: item.sales,
+      revenue: item?.sales?.toFixed(3),
     })) || [];
   const currentYear = new Date().getFullYear();
 
