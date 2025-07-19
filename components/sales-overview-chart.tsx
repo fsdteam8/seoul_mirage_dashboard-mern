@@ -54,9 +54,12 @@ export function SalesOverviewChart() {
   });
 
   const orderStatsData = orderStats?.monthly_sales || [];
-  console.log(orderStatsData);
-  const currentYear = new Date().getFullYear();
 
+  const currentYear = new Date()?.getFullYear();
+  const lastThreeSales = orderStatsData?.slice(-3)?.map(item => ({
+    month: item?.month,
+    sales: item?.sales?.toFixed(3)
+  }));
   return (
     <Card>
       <CardHeader>
@@ -79,7 +82,7 @@ export function SalesOverviewChart() {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
-              data={orderStatsData}
+              data={lastThreeSales}
               layout="vertical"
               margin={{ top: 2, right: 50, left: 0, bottom: 5 }}
             >
