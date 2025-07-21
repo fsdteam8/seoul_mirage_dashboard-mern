@@ -104,11 +104,10 @@ function EnhancedPagination({
               variant={currentPage === pageNum ? "default" : "outline"}
               size="sm"
               onClick={() => onPageChange(pageNum)}
-              className={`h-9 w-9 p-0 ${
-                currentPage === pageNum
+              className={`h-9 w-9 p-0 ${currentPage === pageNum
                   ? "bg-gray-900 text-white hover:bg-gray-800"
                   : "hover:bg-gray-50"
-              }`}
+                }`}
             >
               {pageNum}
             </Button>
@@ -136,7 +135,7 @@ export function CustomerTable() {
   const session = useSession();
   const token = session?.data?.accessToken ?? "";
 
-  const { data, isLoading,isError } = useQuery<CustomerApiResponse>({
+  const { data, isLoading, isError } = useQuery<CustomerApiResponse>({
     queryKey: ["customers", currentPage, searchTerm, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -164,7 +163,7 @@ export function CustomerTable() {
       return res.json();
     },
   });
-// console.log(data?.stats)
+  // console.log(data?.stats)
   // const {
   //   data: statch,
   //   error: statchError,
@@ -209,8 +208,8 @@ export function CustomerTable() {
             isLoading
               ? "Loading..."
               : isError
-              ? "N/A"
-              : String(data?.data?.stats?.totalCustomers ?? 0)
+                ? "N/A"
+                : String(data?.data?.stats?.totalCustomers ?? 0)
           }
           icon={Users}
         />
@@ -220,8 +219,8 @@ export function CustomerTable() {
             isLoading
               ? "Loading..."
               : isError
-              ? "N/A"
-              : String(data?.data?.stats?.new_customers ?? 0)
+                ? "N/A"
+                : String(data?.data?.stats?.new_customers ?? 0)
           }
           icon={UserPlus}
           description="(Last 30 days)"
@@ -232,8 +231,8 @@ export function CustomerTable() {
             isLoading
               ? "Loading..."
               : isError
-              ? "N/A"
-              : `$${Number(data?.data?.stats?.averageOrderValue ?? 0).toFixed(3)}`
+                ? "N/A"
+                : `$${Number(data?.data?.stats?.averageOrderValue ?? 0).toFixed(3)}`
           }
           icon={DollarSign}
         />
@@ -271,7 +270,7 @@ export function CustomerTable() {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Namew</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Orders</TableHead>
@@ -286,16 +285,16 @@ export function CustomerTable() {
           <TableBody>
             {isLoading
               ? Array.from({ length: 10 }).map((_, index) => (
-                  <TableRow key={`skeleton-${index}`}>
-                    {Array.from({ length: 11 }).map((_, i) => (
-                      <TableCell key={i}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                <TableRow key={`skeleton-${index}`}>
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <TableCell key={i}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
               : customerData?.data?.length
-              ? customerData?.data?.map((customer,i) => (
+                ? customerData?.data?.map((customer, i) => (
                   <TableRow key={customer?._id}>
                     <TableCell className="text-center">
                       {i + 1}
@@ -320,7 +319,7 @@ export function CustomerTable() {
                     </TableCell>
                   </TableRow>
                 ))
-              : !isLoading && (
+                : !isLoading && (
                   <TableRow>
                     <TableCell colSpan={11} className="text-center h-24">
                       No customers found.

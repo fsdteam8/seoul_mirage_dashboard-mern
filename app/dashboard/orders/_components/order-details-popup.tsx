@@ -45,6 +45,8 @@
 //         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
 //       case "cancelled":
 //         return "bg-red-100 text-red-800 hover:bg-red-100";
+//       case "pending":
+//         return "bg-orange-100 text-orange-800 hover:bg-orange-100";
 //       default:
 //         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
 //     }
@@ -78,7 +80,7 @@
 //   });
 
 //   const order = data?.data;
-// console.log(order)
+
 //   const handlePrint = () => {
 //     if (printRef.current) {
 //       const printContents = printRef.current.innerHTML;
@@ -102,7 +104,7 @@
 //         .from(printRef.current)
 //         .set({
 //           margin: 0.5,
-//           filename: `order-${order?.id}.pdf`,
+//           filename: `order-${order?._id}.pdf`,
 //           image: { type: "jpeg", quality: 0.98 },
 //           html2canvas: { scale: 2 },
 //           jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
@@ -147,7 +149,7 @@
 //         <DialogHeader>
 //           <DialogTitle className="flex items-center gap-2">
 //             <Package className="h-5 w-5" />
-//             Order #{order?.id}
+//             Order #{order?._id}
 //           </DialogTitle>
 //           <DialogDescription>
 //             Complete order details and information.
@@ -174,17 +176,17 @@
 //                 <div>
 //                   <p className="font-medium">Order Date</p>
 //                   <p className="text-muted-foreground">
-//                     {formatDate(order?.created_at ?? "")}
+//                     {formatDate(order?.createdAt ?? "")}
 //                   </p>
 //                 </div>
 //               </div>
-//               <p>Order ID: {order?.id}</p>
-//               <p>Type: {order?.type}</p>
-//               <p>Shipping Method: {order?.shipping_method}</p>
+//               <p>Order ID: {order?._id}</p>
+//               <p>Type: {order?.type || "N/A"}</p>
+//               <p>Shipping Method: {order?.shipping_method || "N/A"}</p>
 //               <p>Items: {order?.items}</p>
 //               <p>
 //                 Promocode:{" "}
-//                 {order?.promocode?.name || order?.promocode_name || "N/A"}
+//                 {order?.promocode_name || "N/A"}
 //               </p>
 //             </CardContent>
 //           </Card>
@@ -198,78 +200,55 @@
 //               </CardTitle>
 //             </CardHeader>
 //             <CardContent className="space-y-1 text-sm">
-//               <p>
-//                 <strong>Name:</strong> {order?.customer?.full_name}{" "}
-//                 {order?.customer?.last_name}
-//               </p>
-//               <p>
-//                 <strong>Email:</strong> {order?.customer?.email}
-//               </p>
-//               <p>
-//                 <strong>Phone:</strong> {order?.customer?.phone}
-//               </p>
-//               <p>
-//                 <strong>Address:</strong> {order?.customer?.full_address}
-//               </p>
-//               <p>
-//                 <strong>City:</strong> {order?.customer?.city}
-//               </p>
-//               <p>
-//                 <strong>State:</strong> {order?.customer?.state}
-//               </p>
-//               <p>
-//                 <strong>Postal Code:</strong> {order?.customer?.postal_code}
-//               </p>
-//               <p>
-//                 <strong>Country:</strong> {order?.customer?.country}
-//               </p>
+//               <p><strong>Name:</strong> {order?.customer?.name}</p>
+//               <p><strong>Email:</strong> {order?.customer?.email}</p>
+//               <p><strong>Phone:</strong> {order?.customer?.phone}</p>
+//               <p><strong>Address:</strong> {order?.customer?.full_address}</p>
+//               <p><strong>City:</strong> {order?.customer?.city}</p>
+//               <p><strong>State:</strong> {order?.customer?.state}</p>
+//               <p><strong>Postal Code:</strong> {order?.customer?.postal_code}</p>
+//               <p><strong>Country:</strong> {order?.customer?.country}</p>
 //               <p>
 //                 <strong>Status:</strong>{" "}
-//                 <Badge variant="outline">{order?.customer?.status}</Badge>
+//                 <Badge variant="outline">{order?.customer?.role}</Badge>
 //               </p>
 //             </CardContent>
 //           </Card>
 
 //           {/* Product Details */}
-//           {order?.products?.map((product) => (
-//             <Card key={product?.id}>
+//           {order?.products?.map((item, index) => (
+//             <Card key={index}>
 //               <CardHeader>
-//                 <CardTitle>Product: {product?.name}</CardTitle>
+//                 <CardTitle>Product: {item?.product?.name}</CardTitle>
 //               </CardHeader>
 //               <CardContent className="space-y-2">
 //                 <div className="flex items-start gap-4">
 //                   <Image
 //                     src={
-//                       product?.media?.[0]?.file_path
-//                         ? `${product?.media[0].file_path}`
-//                         : "/placeholder.svg"
+//                       item?.product?.media?.[0]?.file_path ||
+//                       "/placeholder.svg"
 //                     }
-//                     alt={product?.name}
+//                     alt={item?.product?.name}
 //                     width={80}
 //                     height={80}
 //                     className="rounded-md object-cover"
 //                   />
 //                   <div className="flex-1 space-y-1 text-sm">
 //                     <p className="text-muted-foreground">
-//                       {product?.description}
+//                       {item.product?.description}
 //                     </p>
 //                     <Badge variant="secondary">
-//                       Category #{product?.category_id}
+//                       Category #{item.product?.category_id}
 //                     </Badge>
 //                     <p>
-//                       Price: ${product?.price} | Quantity:{" "}
-//                       {product?.pivot?.quantity}
+//                       Price: ${item.product?.price} | Quantity: {item.quantity}
 //                     </p>
 //                     <p className="font-semibold">
-//                       Total: $
-//                       {(
-//                         parseFloat(product?.price) *
-//                         (product?.pivot?.quantity ?? 1)
-//                       ).toFixed(2)}
+//                       Total: ${(item.product?.price * item.quantity).toFixed(2)}
 //                     </p>
 //                     <p className="text-muted-foreground">
-//                       Stock Status: {product?.status} | Stock Qty:{" "}
-//                       {product?.stock_quantity}
+//                       Stock Status: {item.product?.status} | Stock Qty:{" "}
+//                       {item.product?.stock_quantity}
 //                     </p>
 //                   </div>
 //                 </div>
@@ -328,10 +307,6 @@
 //           <Button variant="outline" onClick={handleDownloadPdf}>
 //             Download PDF
 //           </Button>
-//           {/* <Button>
-//             <Truck className="h-4 w-4 mr-2" />
-//             Track Package
-//           </Button> */}
 //         </div>
 //       </DialogContent>
 //     </Dialog>
@@ -364,6 +339,15 @@ interface OrderDetailsProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   orderId: string;
+}
+
+export interface ShippingDetails {
+  firstName: string;
+  email: string;
+  phone: string;
+  state: string;
+  postal: string;
+  country: string;
 }
 
 export default function OrderDetails({
@@ -420,6 +404,17 @@ export default function OrderDetails({
   });
 
   const order = data?.data;
+
+  // Parse shipping_details JSON safely
+  let shippingDetails: ShippingDetails | null = null;
+  try {
+    shippingDetails = order?.shipping_details
+      ? JSON.parse(order.shipping_details)
+      : null;
+  } catch {
+    shippingDetails = null;
+  }
+
 
   const handlePrint = () => {
     if (printRef.current) {
@@ -504,8 +499,7 @@ export default function OrderDetails({
                 <span>Order Information</span>
                 <Badge className={getStatusColor(order?.status ?? "")}>
                   {order?.status
-                    ? order.status.charAt(0).toUpperCase() +
-                      order.status.slice(1)
+                    ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
                     : ""}
                 </Badge>
               </CardTitle>
@@ -524,33 +518,82 @@ export default function OrderDetails({
               <p>Type: {order?.type || "N/A"}</p>
               <p>Shipping Method: {order?.shipping_method || "N/A"}</p>
               <p>Items: {order?.items}</p>
-              <p>
-                Promocode:{" "}
-                {order?.promocode_name || "N/A"}
-              </p>
+              <p>Promocode: {order?.promocode_name || "N/A"}</p>
             </CardContent>
           </Card>
 
-          {/* Customer Info */}
+          {/* Customer Info (shipping_details) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Customer Information
+                Customer Information (Shipping Details)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
-              <p><strong>Name:</strong> {order?.customer?.name}</p>
-              <p><strong>Email:</strong> {order?.customer?.email}</p>
-              <p><strong>Phone:</strong> {order?.customer?.phone}</p>
-              <p><strong>Address:</strong> {order?.customer?.full_address}</p>
-              <p><strong>City:</strong> {order?.customer?.city}</p>
-              <p><strong>State:</strong> {order?.customer?.state}</p>
-              <p><strong>Postal Code:</strong> {order?.customer?.postal_code}</p>
-              <p><strong>Country:</strong> {order?.customer?.country}</p>
+              <p>
+                <strong>Name:</strong> {shippingDetails?.firstName || "-"}{" "}
+              </p>
+              <p>
+                <strong>Email:</strong> {shippingDetails?.email || "-"}
+              </p>
+              <p>
+                <strong>Phone:</strong> {shippingDetails?.phone || "-"}
+              </p>
+              {/* <p>
+                <strong>Address:</strong> {shippingDetails?.address || "-"}
+              </p>
+              <p>
+                <strong>City:</strong> {shippingDetails?.city || "-"}
+              </p> */}
+              <p>
+                <strong>State:</strong> {shippingDetails?.state || "-"}
+              </p>
+              <p>
+                <strong>Postal Code:</strong> {shippingDetails?.postal || "-"}
+              </p>
+              <p>
+                <strong>Country:</strong> {shippingDetails?.country || "-"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* User Info (customer) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                User Information (Customer Data)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-sm">
+              <p>
+                <strong>Name:</strong> {order?.customer?.name || "-"}
+              </p>
+              <p>
+                <strong>Email:</strong> {order?.customer?.email || "-"}
+              </p>
+              <p>
+                <strong>Phone:</strong> {order?.customer?.phone || "-"}
+              </p>
+              {/* <p>
+                <strong>Address:</strong> {order?.customer?.full_address || "-"}
+              </p>
+              <p>
+                <strong>City:</strong> {order?.customer?.city || "-"}
+              </p> */}
+              <p>
+                <strong>State:</strong> {order?.customer?.state || "-"}
+              </p>
+              <p>
+                <strong>Postal Code:</strong> {order?.customer?.postal_code || "-"}
+              </p>
+              <p>
+                <strong>Country:</strong> {order?.customer?.country || "-"}
+              </p>
               <p>
                 <strong>Status:</strong>{" "}
-                <Badge variant="outline">{order?.customer?.role}</Badge>
+                <Badge variant="outline">{order?.customer?.role || "-"}</Badge>
               </p>
             </CardContent>
           </Card>
@@ -564,19 +607,14 @@ export default function OrderDetails({
               <CardContent className="space-y-2">
                 <div className="flex items-start gap-4">
                   <Image
-                    src={
-                      item?.product?.media?.[0]?.file_path ||
-                      "/placeholder.svg"
-                    }
+                    src={item?.product?.media?.[0]?.file_path || "/placeholder.svg"}
                     alt={item?.product?.name}
                     width={80}
                     height={80}
                     className="rounded-md object-cover"
                   />
                   <div className="flex-1 space-y-1 text-sm">
-                    <p className="text-muted-foreground">
-                      {item.product?.description}
-                    </p>
+                    <p className="text-muted-foreground">{item.product?.description}</p>
                     <Badge variant="secondary">
                       Category #{item.product?.category_id}
                     </Badge>
@@ -619,18 +657,16 @@ export default function OrderDetails({
                 <span>${order?.total}</span>
               </div>
               <div className="flex justify-between pt-2">
-                <span className="text-sm text-muted-foreground">
-                  Payment Method
-                </span>
+                <span className="text-sm text-muted-foreground">Payment Method</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{order?.payment_method}</span>
+                  {/* <span className="text-sm">{order?.payment_method}</span> */}
                   <Badge
                     variant="outline"
                     className="text-green-600 border-green-600"
                   >
                     {order?.payment_status
                       ? order.payment_status.charAt(0).toUpperCase() +
-                        order.payment_status.slice(1)
+                      order.payment_status.slice(1)
                       : ""}
                   </Badge>
                 </div>
