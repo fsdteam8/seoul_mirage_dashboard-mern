@@ -65,6 +65,9 @@ interface OrderStatchApiResponse {
   pendingPayments: number;
   revenue: number;
   averageOrderValue: number;
+  cancelledOrders:string,
+  pendingOrders:string
+
 }
 
 function EnhancedPagination({
@@ -279,24 +282,24 @@ export default function OrderTable() {
               icon={PackageCheck}
             />
             <StatCard
-              title="Processing"
+              title="Cancel"
               value={
                 orderStatsLoading
                   ? "Loading..."
                   : orderStatsError
                     ? "N/A"
-                    : String(orderStats?.processing ?? 0)
+                    : String(orderStats?.cancelledOrders ?? 0)
               }
               icon={Clock}
             />
             <StatCard
-              title="Pending Payments"
+              title="Pending"
               value={
                 orderStatsLoading
                   ? "Loading..."
                   : orderStatsError
                     ? "N/A"
-                    : String(orderStats?.pendingPayments ?? 0)
+                    : String(orderStats?.pendingOrders ?? 0)
               }
               icon={AlertCircle}
             />
@@ -362,6 +365,7 @@ export default function OrderTable() {
               <TableHead>Order ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Item(s)</TableHead>
               <TableHead>Total</TableHead>
@@ -388,7 +392,7 @@ export default function OrderTable() {
               orderData &&
               orderData.data?.map((order, i) => {
                 // Parse shipping_details JSON string safely
-                let shippingDetails = { firstName: "-", email: "-" };
+                let shippingDetails = { firstName: "-", email: "-",phone:"-"  };
                 try {
                   shippingDetails = JSON.parse(order.shipping_details);
                 } catch {
@@ -403,7 +407,8 @@ export default function OrderTable() {
                     <TableCell>{shippingDetails.firstName || "-"}</TableCell>
 
                     {/* Use shipping_details email instead of customer email */}
-                    <TableCell>{shippingDetails.email || "-"}</TableCell>
+                    <TableCell>{shippingDetails.email || "-"}</TableCell>      
+                    <TableCell>{shippingDetails.phone || "-"}</TableCell>
 
                     <TableCell>
                       {order.createdAt

@@ -163,6 +163,25 @@ export function CategoryTable() {
       return res.json();
     },
   });
+
+  const { data: categoryStats, isLoading: categoryStatsLoading, isError: categoryStatsError } = useQuery({
+    queryKey: ["categoriesStats"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/categories/stats`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    },
+  });
+
   const categories = data?.data?.data;
 
   const mutationDelete = useMutation({
@@ -226,7 +245,6 @@ export function CategoryTable() {
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const totalCount = data?.data?.pagination?.total || 0;
 
   if (error)
     return (
@@ -250,13 +268,25 @@ export function CategoryTable() {
       <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Total Categories"
-          value={String(totalCount)}
+          value={
+            categoryStatsLoading
+              ? "Loading..."
+              : categoryStatsError
+                ? "N/A"
+                : String(categoryStats?.totalCategories ?? 0)
+          }
           icon={ListChecks}
           description="All product categories"
         />
         <StatCard
           title="Avg. Products/Category"
-          value={"8"}
+          value={
+            categoryStatsLoading
+              ? "Loading..."
+              : categoryStatsError
+                ? "N/A"
+                : String(categoryStats?.averageProductsPerCategory ?? 0)
+          }
           icon={Package}
           description="Average items per category"
         />

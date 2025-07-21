@@ -100,7 +100,6 @@ export function AddPromoCodeSheet({
       isActive: true,
     },
   });
-  console.log(promoCodeToEdit)
 
   useEffect(() => {
     if (isOpen) {
@@ -181,7 +180,6 @@ export function AddPromoCodeSheet({
           try {
             const error = await res.json();
             errorMessage = error.message || errorMessage;
-            console.error("API Error Response:", error);
           } catch (e) {
             console.error("Failed to parse error response:", e);
           }
@@ -189,7 +187,6 @@ export function AddPromoCodeSheet({
         }
 
         const result = await res.json();
-        console.log("API Success Response:", result);
         return result;
       } catch (error) {
         console.error("Mutation error:", error);

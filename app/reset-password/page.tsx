@@ -29,10 +29,9 @@ export default function ResetPasswordPage() {
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Reset password email:", data.email);
     toast({
       title: "OTP Sent",
-      description: "An OTP has been sent to your email address.",
+      description: `An OTP has been sent to your email ${data.email} address.`,
     });
     // Typically, you'd navigate to an OTP entry page or a page to set new password if OTP is handled differently
     router.push("/reset-password/confirm");

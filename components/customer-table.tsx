@@ -274,11 +274,11 @@ export function CustomerTable() {
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Orders</TableHead>
-              <TableHead>Full Address</TableHead>
-              <TableHead>City</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead>Postal Code</TableHead>
-              <TableHead>Country</TableHead>
+              {/* <TableHead>Full Address</TableHead> */}
+              {/* <TableHead>City</TableHead> */}
+              {/* <TableHead>State</TableHead> */}
+              {/* <TableHead>Postal Code</TableHead> */}
+              {/* <TableHead>Country</TableHead> */}
               <TableHead>Total Spent</TableHead>
             </TableRow>
           </TableHeader>
@@ -296,25 +296,19 @@ export function CustomerTable() {
               : customerData?.data?.length
                 ? customerData?.data?.map((customer, i) => (
                   <TableRow key={customer?._id}>
-                    <TableCell className="text-center">
-                      {i + 1}
-                    </TableCell>
-                    <TableCell>
-                      {customer?.name}
-                    </TableCell>
+                    <TableCell >{i + 1}</TableCell>
+                    <TableCell>{customer?.name}</TableCell>
                     <TableCell>{customer?.email}</TableCell>
                     <TableCell>{customer?.phone}</TableCell>
-                    <TableCell className="text-center">
-                      {customer?.orders_count}
-                    </TableCell>
-                    <TableCell>{customer?.full_address}</TableCell>
-                    <TableCell>{customer?.city}</TableCell>
-                    <TableCell>{customer?.state}</TableCell>
-                    <TableCell className="text-center">
-                      {customer?.postal_code}
-                    </TableCell>
-                    <TableCell>{customer?.country}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell >{customer?.orders_count}</TableCell>
+                    {/* <TableCell>{customer?.full_address}</TableCell> */}
+                    {/* <TableCell>{customer?.city}</TableCell> */}
+                    {/* <TableCell>{customer?.state}</TableCell> */}
+                    {/* <TableCell className="text-center"> */}
+                      {/* {customer?.postal_code} */}
+                    {/* </TableCell> */}
+                    {/* <TableCell>{customer?.country}</TableCell> */}
+                    <TableCell >
                       {customer?.orders_sum_total.toFixed(2)}
                     </TableCell>
                   </TableRow>
