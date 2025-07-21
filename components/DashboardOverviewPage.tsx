@@ -187,7 +187,6 @@ export default function DashboardOverviewPage() {
     };
   });
 
-console.log(recentOrders)
 
   return (
     <div className="space-y-6">

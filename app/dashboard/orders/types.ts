@@ -71,7 +71,7 @@ export const mockOrders: Order[] = Array.from({ length: 25 }, (_, i) => {
 export const orderPaymentStatuses: OrderPaymentStatus[] = [
   "paid",
   "unpaid",
-  "failed",
+  // "failed",
 ];
 export const orderFulfillmentStatuses: OrderFulfillmentStatus[] = [
   "delivered",
