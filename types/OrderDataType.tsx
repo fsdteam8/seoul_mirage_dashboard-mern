@@ -70,39 +70,117 @@
 //   total: number;
 // }
 
-export interface Promocode {
-  id: string;
-  name: string | null;
+// export interface Promocode {
+//   id: string;
+//   name: string | null;
+// }
+
+// export interface Customer {
+//   id: string;
+//   name: string;
+//   email: string;
+//   phone: string;
+//   role?: string;
+//   createdAt: string;
+//   updatedAt: string;
+//   // Optional MongoDB __v version key omitted or add if needed: __v?: number;
+// }
+
+// export interface Order {
+//   id: string;
+//   _id?: string; // optional original MongoDB _id if needed
+//   type: string | null;
+//   items: number;
+//   status: string;
+//   shipping_method: string | null;
+//   shipping_price: number;
+//   order_summary: string | null;
+//   payment_method: string;
+//   payment_status: string;
+//   promocode_id: string | null;
+//   promocode_name: string | null;
+//   total: number;
+//   createdAt: string;
+//   updatedAt: string;
+//   customer: Customer | null;
+// }
+
+// export interface PaginationLink {
+//   url: string | null;
+//   label: string;
+//   active: boolean;
+// }
+
+// export interface Pagination {
+//   current_page: number;
+//   per_page: number;
+//   total: number;
+//   last_page: number;
+//   from: number;
+//   to: number;
+//   links: PaginationLink[];
+// }
+
+// export interface OrdersApiResponseData {
+//   success: boolean;
+//   data: Order[];
+//   params: {
+//     page: string;
+//   };
+//   pagination: Pagination;
+// }
+
+// export interface OrdersApiResponse {
+//   message: string;
+//   data: OrdersApiResponseData;
+// }
+
+
+export interface ShippingDetails {
+  firstName: string;
+  email: string;
+  phone: string;
+  state: string;
+  postal: string;
+  country: string;
 }
 
 export interface Customer {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   phone: string;
-  role?: string;
+  full_address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  role: string;
   createdAt: string;
   updatedAt: string;
-  // Optional MongoDB __v version key omitted or add if needed: __v?: number;
+  image: string;
+  __v?: number;
 }
 
 export interface Order {
+  _id: string;
   id: string;
-  _id?: string; // optional original MongoDB _id if needed
-  type: string | null;
+  type: string;
   items: number;
   status: string;
-  shipping_method: string | null;
+  shipping_method: string;
   shipping_price: number;
-  order_summary: string | null;
+  order_summary: string;
   payment_method: string;
   payment_status: string;
   promocode_id: string | null;
   promocode_name: string | null;
+  shipping_details: string; // NOTE: still raw JSON string, can be parsed into ShippingDetails
   total: number;
   createdAt: string;
   updatedAt: string;
-  customer: Customer | null;
+  __v?: number;
+  customer: Customer;
 }
 
 export interface PaginationLink {
@@ -131,6 +209,6 @@ export interface OrdersApiResponseData {
 }
 
 export interface OrdersApiResponse {
-  message: string;
+  message?: string; // optional, not in the response above
   data: OrdersApiResponseData;
 }

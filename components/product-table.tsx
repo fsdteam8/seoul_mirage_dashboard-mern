@@ -173,6 +173,7 @@ function EnhancedPagination({
 }
 
 export function ProductTable() {
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -380,7 +381,32 @@ export function ProductTable() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const categories = Array.from(new Set(products.map((p) => p?.category?.name)));
+  const {
+    data: allCategories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery<string[]>({
+    queryKey: ["allCategories"],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?paginate_count=60`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+
+      const json = await res.json();
+      return json.data.data.map((cat: { name: string }) => cat.name);
+    },
+  });
+
+
+  // const categories = Array.from(new Set(products.map((p) => p?.category?.name)));
 
   if (error) {
     return (
@@ -485,7 +511,8 @@ export function ProductTable() {
             className="pl-10 w-[264px] h-[49px]"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+
+        {/* <Select value={categoryFilter} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
@@ -496,6 +523,26 @@ export function ProductTable() {
                 {cat}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select> */}
+
+        <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+          <SelectTrigger className="w-full sm:w-[180px] h-[49px]">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Categories</SelectItem>
+            {categoriesLoading ? (
+              <SelectItem disabled value="loading">Loading...</SelectItem>
+            ) : categoriesError ? (
+              <SelectItem disabled value="error">Failed to load</SelectItem>
+            ) : (
+              allCategories && allCategories?.map((cat, i) => (
+                <SelectItem key={i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
