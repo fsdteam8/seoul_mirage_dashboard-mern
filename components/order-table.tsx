@@ -65,8 +65,8 @@ interface OrderStatchApiResponse {
   pendingPayments: number;
   revenue: number;
   averageOrderValue: number;
-  cancelledOrders:string,
-  pendingOrders:string
+  cancelledOrders: string,
+  pendingOrders: string
 
 }
 
@@ -385,14 +385,25 @@ export default function OrderTable() {
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={`skeleton-order-${index}`}>
-                  {/* ... skeleton rows ... */}
+                  <TableCell><Skeleton className="h-4 w-10" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-8 rounded-full" />
+                  </TableCell>
                 </TableRow>
               ))}
             {!isLoading &&
               orderData &&
               orderData.data?.map((order, i) => {
                 // Parse shipping_details JSON string safely
-                let shippingDetails = { firstName: "-", email: "-",phone:"-"  };
+                let shippingDetails = { firstName: "-", email: "-", phone: "-" };
                 try {
                   shippingDetails = JSON.parse(order.shipping_details);
                 } catch {
@@ -407,7 +418,7 @@ export default function OrderTable() {
                     <TableCell>{shippingDetails.firstName || "-"}</TableCell>
 
                     {/* Use shipping_details email instead of customer email */}
-                    <TableCell>{shippingDetails.email || "-"}</TableCell>      
+                    <TableCell>{shippingDetails.email || "-"}</TableCell>
                     <TableCell>{shippingDetails.phone || "-"}</TableCell>
 
                     <TableCell>
