@@ -16,7 +16,11 @@ export default function Home() {
         router.push("/unauthorized");
       }
     }
+    setTimeout(() => {
+      router.push("/dashboard")
+    }, 1000);
   }, [status, session, router]);
+
 
   return (
     <div className="flex h-screen items-center justify-center bg-brand-bg-light">
