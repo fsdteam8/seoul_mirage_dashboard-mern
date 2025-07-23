@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Seoul Mirage Dashboard",
   description: "Dashboard for Seoul Mirage",
+   icons:{
+    icon:"/Design-sans-titre.svg"
+   }
 };
 
 export default function RootLayout({
