@@ -22,6 +22,7 @@ const navigation = [
   { name: "Categories", href: "/dashboard/categories" },
   { name: "Orders", href: "/dashboard/orders" },
   { name: "User", href: "/dashboard/customers" },
+  { name: "Contacts", href: "/dashboard/contacts" },
   { name: "Promo Codes", href: "/dashboard/promocodes" },
   { name: "Settings", href: "/dashboard/settings" },
 ];
