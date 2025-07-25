@@ -869,10 +869,10 @@ export function AddProductSheet({
     setImagePreviews([]);
     setSelectedFiles([]);
     setExistingImages([]);
-    toast({
-      title: "All Images Cleared",
-      description: "All images have been removed",
-    });
+    // toast({
+    //   title: "All Images Cleared",
+    //   description: "All images have been removed",
+    // });
   };
 
   // Cleanup on unmount
